@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bloomly Coffee Hub</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background-color: #EEF6F1; color: #2C3E35; -webkit-font-smoothing: antialiased; }
+    .btn-accent { background-color: #EA6227; color: #FFFFFF; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-accent:active { transform: scale(0.98); opacity: 0.95; }
+    .text-orange { color: #EA6227; }
+    .card-shell { background-color: #FFFFFF; border-radius: 24px; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 2px 8px rgba(44, 62, 53, 0.02); }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    .recipe-markdown-body h2 { font-size: 1.05rem; font-weight: 800; color: #EA6227; margin-top: 1.2rem; margin-bottom: 0.35rem; letter-spacing: -0.025em; display: flex; align-items: center; gap: 6px; }
+    .recipe-markdown-body h2::before { content: ''; display: inline-block; width: 4px; height: 14px; background: #EA6227; border-radius: 2px; }
+    .recipe-markdown-body p { font-size: 0.88rem; color: #475569; line-height: 1.5; margin-bottom: 0.8rem; font-weight: 400; }
+    .tap-target-fix { -webkit-tap-highlight-color: transparent; }
+    /* Login screen */
+    #viewLogin { min-height: 100vh; }
+    .user-card { transition: all 0.2s ease; }
+    .user-card:active { transform: scale(0.97); }
+    /* Action buttons uniform style */
+    .action-btn-primary { background-color: #EA6227; color: #FFFFFF; border-radius: 16px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .action-btn-primary:active { transform: scale(0.97); }
+    .action-btn-secondary { background-color: #FFFFFF; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .action-btn-secondary:active { transform: scale(0.97); }
+    .action-btn-outline { background-color: #FFFFFF; border: 1px solid rgba(234, 98, 39, 0.4); border-radius: 16px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .action-btn-outline:active { transform: scale(0.97); }
+  </style>
+</head>
+<body class="p-4 max-w-md mx-auto min-h-screen pb-12 relative">
+
+  <!-- LOGIN SCREEN -->
+  <div id="viewLogin" class="flex flex-col justify-center items-center gap-6 py-16">
+    <div class="text-center space-y-1 mb-4">
+      <h1 class="text-sm font-black tracking-widest text-[#2A2A9A] uppercase">Bloomly</h1>
+      <h2 class="text-2xl font-black text-slate-800 tracking-tight">Who's brewing today?</h2>
+      <p class="text-xs text-slate-400 font-medium">Select your profile to personalise your experience</p>
+    </div>
+    <div class="w-full grid grid-cols-2 gap-4">
+      <div onclick="loginAs('Jacques')" class="user-card bg-white rounded-3xl p-6 text-center border border-slate-200/60 shadow-sm cursor-pointer">
+        <div class="w-14 h-14 rounded-full bg-[#EA6227]/10 flex items-center justify-center text-2xl font-black text-[#EA6227] mx-auto mb-3">J</div>
+        <span class="font-black text-slate-800 text-sm block">Jacques</span>
+        <span class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-0.5 block">Profile 1</span>
+      </div>
+      <div onclick="loginAs('Test')" class="user-card bg-white rounded-3xl p-6 text-center border border-slate-200/60 shadow-sm cursor-pointer">
+        <div class="w-14 h-14 rounded-full bg-[#2A2A9A]/10 flex items-center justify-center text-2xl font-black text-[#2A2A9A] mx-auto mb-3">E</div>
+        <span class="font-black text-slate-800 text-sm block">Test</span>
+        <span class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-0.5 block">Profile 2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL LOADER -->
+  <div id="globalAppLoaderScreen" class="fixed inset-0 bg-[#EEF6F1] z-50 flex flex-col justify-center items-center gap-3 hidden">
+    <div class="w-10 h-10 border-4 border-[#2A2A9A]/10 border-t-[#EA6227] animate-spin rounded-full"></div>
+    <span class="text-xs font-black tracking-widest text-[#2A2A9A] uppercase">Syncing Bloomly System...</span>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="viewDashboard" class="space-y-5 hidden">
+    <div class="text-center my-4 space-y-1">
+      <div class="flex items-center justify-between mb-1">
+        <button onclick="logoutUser()" class="text-[9px] font-black text-slate-400 uppercase tracking-wider hover:text-orange transition-colors tap-target-fix">← Switch User</button>
+        <span id="dashUserBadge" class="text-[9px] font-black text-[#2A2A9A] uppercase tracking-wider bg-[#2A2A9A]/10 px-2 py-0.5 rounded-full"></span>
+      </div>
+      <h1 class="text-sm font-black tracking-widest text-[#2A2A9A] uppercase">Bloomly</h1>
+      <h2 class="text-2xl font-black text-slate-800 tracking-tight leading-tight px-4" id="dashGreetingHeader">Welcome. Let's brew some coffee!</h2>
+    </div>
+
+    <!-- Action Buttons — uniform 3-column grid -->
+    <div class="grid grid-cols-3 gap-2.5">
+      <div onclick="routeToLogNew()" class="action-btn-primary tap-target-fix">
+        <span class="text-[10px] font-black uppercase tracking-tight leading-tight">Quick Add</span>
+      </div>
+      <div onclick="routeToLogMostRecent()" class="action-btn-secondary tap-target-fix">
+        <span class="font-extrabold text-[10px] text-[#EA6227] block uppercase tracking-tight">Log Recent</span>
+        <span id="lblRecentSubLabel" class="text-[9px] font-medium text-slate-400 block max-w-[90px] truncate mt-0.5">Loading...</span>
+      </div>
+      <div onclick="routeToLogExisting()" class="action-btn-outline tap-target-fix">
+        <span class="text-[10px] font-black text-[#EA6227] uppercase tracking-tight leading-tight">Log Existing</span>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-3 gap-2.5">
+      <div class="bg-white p-3.5 rounded-2xl text-center border border-slate-200/60 shadow-xs">
+        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Total Brews</span>
+        <span id="mCount" class="text-2xl font-black text-slate-800 block mt-0.5">--</span>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl text-center border border-slate-200/60 shadow-xs">
+        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Fav Method</span>
+        <span id="mFav" class="text-xl font-black text-slate-800 block mt-1 truncate">--</span>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl text-center border border-slate-200/60 shadow-xs">
+        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Av. Brew Time</span>
+        <span id="mTime" class="text-2xl font-black text-slate-800 block mt-0.5">--</span>
+      </div>
+    </div>
+
+    <!-- Recipes + Add -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="card-shell p-4 flex flex-col justify-between space-y-3 min-h-[140px]">
+        <div>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">My Saved Recipes</span>
+          <div id="boxSavedRecipesList" class="space-y-1.5 max-h-24 overflow-y-auto text-xs font-bold text-slate-700 underline decoration-slate-300"></div>
+        </div>
+        <button onclick="triggerNewRecipeCreation()" class="text-[10px] font-extrabold text-orange uppercase tracking-wider text-left pt-1 block">View All Recipes</button>
+      </div>
+      <div onclick="triggerNewRecipeCreation()" class="bg-white p-4 rounded-3xl border-2 border-slate-200 border-dashed shadow-xs flex flex-col justify-center items-center text-center cursor-pointer tap-target-fix active:bg-slate-50 transition-colors min-h-[140px]">
+        <div class="w-8 h-8 rounded-full bg-orange/10 flex items-center justify-center text-orange text-lg font-bold mb-1">+</div>
+        <span class="text-orange font-black text-sm block">Add a new recipe</span>
+        <span class="text-[9px] text-slate-400 mt-0.5 font-medium">Create clean custom steps</span>
+      </div>
+    </div>
+
+    <!-- Favourite Coffees + Chart -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="card-shell p-4 flex flex-col justify-between min-h-[150px]">
+        <div>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">Your Favourite Coffees</span>
+          <div id="boxPopularCoffeesList" class="space-y-2 text-xs font-bold text-slate-800 underline decoration-slate-200 max-h-28 overflow-y-auto"></div>
+        </div>
+      </div>
+      <div class="card-shell p-3.5 flex flex-col justify-between min-h-[150px]">
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Most Popular Coffees</span>
+        <div class="w-full h-28 relative mt-2">
+          <canvas id="chartPopularityDashboard"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recipe Library -->
+    <div class="space-y-2.5">
+      <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Recipe Library</h3>
+      <div id="boxBaseLibraryGrid" class="grid grid-cols-3 gap-2.5"></div>
+    </div>
+
+    <!-- Quote Card -->
+    <div id="widgetQuoteCard" class="card-shell p-4 space-y-2 hidden">
+      <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Quote of the Day</span>
+      <p id="lblQuoteText" class="text-xs text-slate-600 font-medium italic leading-relaxed m-0">"Sourcing parameters..."</p>
+      <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+        <span id="lblQuoteSource" class="text-[9px] font-black text-slate-400 uppercase">Origin Coffee</span>
+        <a id="lblQuoteLink" href="#" target="_blank" class="text-[10px] font-black text-orange underline tracking-tight">Read More</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG NEW -->
+  <div id="viewLogNew" class="hidden bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 space-y-5">
+    <div class="flex items-center justify-center relative border-b border-slate-100 pb-3">
+      <button onclick="returnToDashboard()" class="absolute left-0 text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <h2 class="text-orange font-black text-base text-center px-8">Quick Add</h2>
+    </div>
+    <form id="formNewLog" onsubmit="handleLogFormSubmit(event, 'NEW')" class="grid grid-cols-2 gap-3.5 text-xs">
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Origin Name</label>
+        <input type="text" id="lnOrigin" required placeholder="E.g., Don Eli Tamatica" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Producer</label>
+        <input type="text" id="lnProducer" required placeholder="Carlos Montero" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Processing Method</label>
+        <input type="text" id="lnProcessing" required placeholder="Honey / Natural" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Roaster</label>
+        <input type="text" id="lnRoaster" required placeholder="Square Mile" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Brew Method</label>
+        <select id="lnMethod" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Recipe Profile</label>
+        <select id="lnRecipe" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Total Yield (g)</label>
+        <input type="number" id="lnYield" required placeholder="250" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Grind Size</label>
+        <input type="text" id="lnGrind" required placeholder="24 Clicks" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">My Score (1.0 – 5.0)</label>
+        <input type="number" id="lnMyScore" step="0.1" max="5" required placeholder="4.2" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Cupping Score</label>
+        <input type="number" id="lnCupping" step="0.1" placeholder="88.5" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Water Temp (°C)</label>
+        <input type="number" id="lnWaterTemp" step="0.5" placeholder="93" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Grinder Used</label>
+        <input type="text" id="lnGrinder" placeholder="Comandante C40" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Brew Time (M:SS)</label>
+        <input type="text" id="lnBrewTime" placeholder="3:45" pattern="^\d+:[0-5]\d$" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <span class="text-[9px] text-slate-400 mt-0.5 block">Format: minutes:seconds e.g. 3:45</span>
+      </div>
+      <div class="flex items-center gap-2 pt-4">
+        <input type="checkbox" id="lnFavRecipe" class="w-4 h-4 accent-[#EA6227]">
+        <label for="lnFavRecipe" class="font-bold text-slate-500 cursor-pointer">Mark recipe as favourite</label>
+      </div>
+      <div class="col-span-2">
+        <label class="block font-bold text-slate-500 mb-1">Sensory Notes</label>
+        <textarea id="lnNotes" rows="3" placeholder="Stunning stone fruit clarity. Super clean sweetness on finish." class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white"></textarea>
+      </div>
+      <button type="submit" id="btnNewLogSubmitSpinner" class="col-span-2 w-full btn-accent font-black py-3.5 rounded-xl mt-1 tracking-wide shadow-sm cursor-pointer">Save to coffee log</button>
+    </form>
+  </div>
+
+  <!-- LOG EXISTING -->
+  <div id="viewLogExisting" class="hidden bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 space-y-5">
+    <div class="flex items-center justify-center relative border-b border-slate-100 pb-3">
+      <button onclick="returnToDashboard()" class="absolute left-0 text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <h2 class="text-orange font-black text-base text-center px-8">Log Recent</h2>
+    </div>
+
+    <div class="space-y-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/80 shadow-inner">
+      <label class="block font-black text-[9px] text-slate-400 uppercase tracking-wider">Select Coffee</label>
+      <select id="selGlobalCoffeeSelector" onchange="populateExistingCoffeeFields(this.value)" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-bold outline-none"></select>
+    </div>
+
+    <form id="formExistingLog" onsubmit="handleLogFormSubmit(event, 'EXISTING')" class="grid grid-cols-2 gap-3.5 text-xs">
+      <div>
+        <label class="block font-bold text-slate-400 mb-1">Producer (Locked)</label>
+        <input type="text" id="leProducer" readonly class="w-full p-2.5 bg-slate-100 text-slate-400 border border-slate-200/60 rounded-xl outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-400 mb-1">Origin (Locked)</label>
+        <input type="text" id="leOrigin" readonly class="w-full p-2.5 bg-slate-100 text-slate-400 border border-slate-200/60 rounded-xl outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-400 mb-1">Processing (Locked)</label>
+        <input type="text" id="leProcessing" readonly class="w-full p-2.5 bg-slate-100 text-slate-400 border border-slate-200/60 rounded-xl outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-400 mb-1">Roaster (Locked)</label>
+        <input type="text" id="leRoaster" readonly class="w-full p-2.5 bg-slate-100 text-slate-400 border border-slate-200/60 rounded-xl outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Brew Method</label>
+        <select id="leMethod" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Recipe Profile</label>
+        <select id="leRecipe" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Total Yield (g)</label>
+        <input type="number" id="leYield" required placeholder="240" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:border-orange focus:bg-white outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Grind Size</label>
+        <input type="text" id="leGrind" required placeholder="21 Clicks" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:border-orange focus:bg-white outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">My Score (1.0 – 5.0)</label>
+        <input type="number" id="leMyScore" step="0.1" max="5" required placeholder="4.1" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-400 mb-1">Cupping Score (Ref)</label>
+        <input type="number" id="leCupping" step="0.1" readonly class="w-full p-2.5 bg-slate-100 text-slate-400 border border-slate-200/60 rounded-xl outline-none">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Water Temp (°C)</label>
+        <input type="number" id="leWaterTemp" step="0.5" placeholder="93" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Grinder Used</label>
+        <input type="text" id="leGrinder" placeholder="Comandante C40" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Brew Time (M:SS)</label>
+        <input type="text" id="leBrewTime" placeholder="3:45" pattern="^\d+:[0-5]\d$" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <span class="text-[9px] text-slate-400 mt-0.5 block">Format: minutes:seconds e.g. 3:45</span>
+      </div>
+      <div class="flex items-center gap-2 pt-4">
+        <input type="checkbox" id="leFavRecipe" class="w-4 h-4 accent-[#EA6227]">
+        <label for="leFavRecipe" class="font-bold text-slate-500 cursor-pointer">Mark recipe as favourite</label>
+      </div>
+      <div class="col-span-2">
+        <label class="block font-bold text-slate-500 mb-1">Sensory Notes</label>
+        <textarea id="leNotes" rows="3" placeholder="Balanced out perfectly today. Juicy fruit profiles." class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:border-orange focus:bg-white outline-none"></textarea>
+      </div>
+      <button type="submit" id="btnExistingLogSubmitSpinner" class="col-span-2 w-full btn-accent font-black py-3.5 rounded-xl mt-1 tracking-wide shadow-sm cursor-pointer">Save to coffee log</button>
+    </form>
+  </div>
+
+  <!-- COFFEE DETAILS HUB -->
+  <div id="viewCoffeeDetails" class="hidden space-y-4">
+    <div class="text-center relative py-2 border-b border-slate-200/60">
+      <button onclick="returnToDashboard()" class="absolute left-0 top-3 text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <h2 id="hubCoffeeTitle" class="text-2xl font-black text-orange tracking-tight">Don Eli Tamatica</h2>
+      <span id="hubCoffeeMetadataSub" class="text-[10px] font-bold text-slate-400 tracking-wide block uppercase mt-0.5">Carlos Montero • Honey • Square Mile</span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2.5">
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/60 text-center shadow-xs">
+        <span class="text-[9px] font-black text-slate-400 uppercase block tracking-wider">Cupping Score</span>
+        <span id="hubCuppingScore" class="text-2xl font-black text-slate-800 block mt-0.5">--</span>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/60 text-center shadow-xs">
+        <span class="text-[9px] font-black text-slate-400 uppercase block tracking-wider">Av. User Score</span>
+        <span id="hubAvUserScore" class="text-2xl font-black text-slate-800 block mt-0.5">--</span>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/60 text-center shadow-xs border-[#EEF6F1]">
+        <span class="text-[9px] font-black text-[#2A2A9A] uppercase block tracking-wider">Times Brewed</span>
+        <span id="hubTimesBrewed" class="text-2xl font-black text-slate-800 block mt-0.5">--</span>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-xs space-y-2">
+      <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Brew Time Variability (Seconds)</span>
+      <div class="w-full h-44 relative">
+        <canvas id="chartHubVariabilityLine"></canvas>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-xs space-y-3">
+      <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Brew History</span>
+      <div id="boxHubLogsLedger" class="space-y-2.5 max-h-56 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- RECIPE PAGE -->
+  <div id="viewRecipePage" class="hidden space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+      <button onclick="returnToDashboard()" class="text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <button onclick="toggleRecipeEditState()" id="btnRecipeEditToggle" class="text-orange font-black text-xs bg-orange/10 px-4 py-1.5 rounded-full tap-target-fix">Modify Config</button>
+    </div>
+
+    <div id="recipeModeRead" class="space-y-4">
+      <h1 id="lblReadRecipeTitle" class="text-2xl font-black text-orange tracking-tight text-center leading-tight">Tetsu Kasuya 4:6 Method</h1>
+      <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-xs">
+        <div id="containerParsedMarkdownOutput" class="recipe-markdown-body"></div>
+      </div>
+    </div>
+
+    <div id="recipeModeWrite" class="hidden bg-white p-4 rounded-3xl shadow-sm border border-slate-200/60 space-y-4">
+      <div>
+        <label class="block font-bold text-slate-500 text-xs mb-1">Recipe Name</label>
+        <input type="text" id="txtWriteRecipeName" placeholder="E.g., Tetsu Kasuya 4:6 Method" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:outline-none focus:bg-white focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 text-xs mb-1">Instructions</label>
+        <div class="bg-orange/5 border border-orange/20 p-3 rounded-xl text-[11px] text-slate-600 mb-2 space-y-1">
+          <span class="font-black text-orange block uppercase tracking-wider">💡 Formatting Guide:</span>
+          <p class="m-0 leading-relaxed text-slate-500 font-medium">Start a line with <b class="text-orange">#</b> to create a bold section heading (e.g., <b># Step 1</b>). Leave blank lines between steps for clean spacing.</p>
+        </div>
+        <textarea id="txtWriteInstructionsMarkdown" rows="12" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-orange focus:bg-white leading-relaxed" placeholder="# Step 1&#10;0:00 - Pour 60g water...&#10;&#10;# Step 2&#10;0:45 - Pour another 60g..."></textarea>
+      </div>
+      <button onclick="commitRecipeChangeToServer()" id="btnSaveRecipeSpinner" class="w-full btn-accent font-black py-3.5 rounded-xl text-xs tracking-wider cursor-pointer shadow-sm">Save Recipe Configuration</button>
+    </div>
+
+    <div class="bg-white/60 p-4 rounded-2xl border border-slate-200/60 text-xs space-y-2">
+      <span class="block text-[9px] font-black text-slate-400 uppercase tracking-wider">My Saved Recipes</span>
+      <div id="recipeFooterIndexLinks" class="flex flex-wrap gap-2 text-slate-700 font-bold"></div>
+    </div>
+  </div>
+
+  <script>
+    let globalDatabaseCachedStore = null;
+    let dashboardBarChartInstance = null;
+    let coffeeHubLineChartInstance = null;
+    let isEditingRecipeState = false;
+    let currentUser = null;
+
+    const ICON_VECTOR_COLLECTION = {
+      "v60-cone": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v2H3zM5 5l4 14h6l4-14M9 19h6v2H9z"/></svg>`,
+      "kalita-flat": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l-2 13H6L4 4zM6 17h12v3H6z"/></svg>`,
+      "orea-geometric": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l-3 12H7L4 4zM8 16l-1 5h10l-1-5"/></svg>`,
+      "chemex-hourglass": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l-5 6v2l5 6H6l5-6V9L6 3z"/><path d="M10 11h4"/></svg>`,
+      "aeropress-plunger": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="14" rx="1"/><path d="M5 16h14v2H5zm4 2h6v3H9z"/></svg>`,
+      "timemore-ribbed": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18v1H3zm3 1l3 13h6l3-13M8 9h8M9 14h6"/></svg>`
+    };
+
+    // ─── LOGIN ───────────────────────────────────────────────────────────────
+    function loginAs(userName) {
+      currentUser = userName;
+      document.getElementById('viewLogin').classList.add('hidden');
+      document.getElementById('dashUserBadge').innerText = userName;
+      document.getElementById('dashGreetingHeader').innerText = `Welcome, ${userName}. Let's brew some coffee!`;
+      synchronizeApplicationCoreEngine(true);
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      globalDatabaseCachedStore = null;
+      switchActiveScreenViewState('viewLogin');
+    }
+
+    // ─── ROUTING ─────────────────────────────────────────────────────────────
+    function switchActiveScreenViewState(targetViewId) {
+      ['viewLogin','viewDashboard','viewLogNew','viewLogExisting','viewCoffeeDetails','viewRecipePage'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(targetViewId).classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
+
+    function returnToDashboard() {
+      switchActiveScreenViewState('viewDashboard');
+      synchronizeApplicationCoreEngine(false);
+    }
+
+    // ─── SYNC ────────────────────────────────────────────────────────────────
+    function synchronizeApplicationCoreEngine(isFirstBootLoad) {
+      if (isFirstBootLoad) document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
+
+      google.script.run.withSuccessHandler(function(data) {
+        globalDatabaseCachedStore = data;
+
+        document.getElementById('mCount').innerText = data.totalThisMonth;
+        document.getElementById('mFav').innerText = data.favoriteMethod;
+        document.getElementById('mTime').innerText = data.averageBrewTime;
+        document.getElementById('lblRecentSubLabel').innerText = data.mostRecentCoffeeName;
+
+        renderDashboardListsAndCharts(data);
+
+        if (isFirstBootLoad) {
+          google.script.run.withSuccessHandler(function(quoteObj) {
+            if (quoteObj && quoteObj.text) {
+              document.getElementById('lblQuoteText').innerText = `"${quoteObj.text}"`;
+              document.getElementById('lblQuoteSource').innerText = quoteObj.source;
+              document.getElementById('lblQuoteLink').href = quoteObj.link;
+              document.getElementById('widgetQuoteCard').classList.remove('hidden');
+            }
+            document.getElementById('globalAppLoaderScreen').classList.add('hidden');
+          }).getScrapedCoffeeQuote();
+        } else {
+          document.getElementById('globalAppLoaderScreen').classList.add('hidden');
+        }
+      }).getDashboardData(currentUser);
+    }
+
+    // ─── DASHBOARD RENDER ────────────────────────────────────────────────────
+    function renderDashboardListsAndCharts(data) {
+      const recBox = document.getElementById('boxSavedRecipesList');
+      recBox.innerHTML = data.savedRecipes.length ? "" : "<p class='text-slate-400 font-normal italic m-0'>No profiles added yet.</p>";
+      data.savedRecipes.forEach(r => {
+        let p = document.createElement('p');
+        p.className = "cursor-pointer tap-target-fix truncate hover:text-orange transition-colors py-0.5";
+        p.innerText = r;
+        p.onclick = () => routeToRecipePage(r);
+        recBox.appendChild(p);
+      });
+
+      const popBox = document.getElementById('boxPopularCoffeesList');
+      popBox.innerHTML = data.popularCoffeesList.length ? "" : "<p class='text-slate-400 font-normal italic m-0'>Log brews to compute charts.</p>";
+      data.popularCoffeesList.forEach(c => {
+        let p = document.createElement('p');
+        p.className = "cursor-pointer tap-target-fix truncate hover:text-orange transition-colors py-0.5";
+        p.innerText = c;
+        p.onclick = () => routeToCoffeeHubPage(c);
+        popBox.appendChild(p);
+      });
+
+      const libGrid = document.getElementById('boxBaseLibraryGrid');
+      libGrid.innerHTML = "";
+      data.baseLibrary.forEach(item => {
+        let div = document.createElement('div');
+        div.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-xs flex flex-col items-center justify-center text-center cursor-pointer tap-target-fix active:scale-95 transition-transform min-h-[90px]";
+        div.onclick = () => routeToRecipePage(item.name);
+        let vectorIconStringSvg = ICON_VECTOR_COLLECTION[item.icon] || ICON_VECTOR_COLLECTION["v60-cone"];
+        div.innerHTML = `
+          <div class="w-9 h-9 mb-1.5 flex items-center justify-center text-orange bg-orange/10 rounded-xl">${vectorIconStringSvg}</div>
+          <span class="text-[11px] font-black text-slate-800 tracking-tight block max-w-full truncate">${item.name}</span>
+          <span class="text-[8px] font-bold text-slate-400 block mt-0.5 uppercase tracking-wide">Recipe</span>
+        `;
+        libGrid.appendChild(div);
+      });
+
+      const ctx = document.getElementById('chartPopularityDashboard').getContext('2d');
+      if (dashboardBarChartInstance) dashboardBarChartInstance.destroy();
+      const safetyLabels = data.recentCoffeesChartData.labels.length ? data.recentCoffeesChartData.labels.map(l => l.substring(0, 8) + '..') : ['None'];
+      const safetyCounts = data.recentCoffeesChartData.counts.length ? data.recentCoffeesChartData.counts : [0];
+      dashboardBarChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: safetyLabels, datasets: [{ data: safetyCounts, backgroundColor: '#2A2A9A', borderRadius: 6, barThickness: 14 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 8, weight: '700' }, color: '#64748B' } },
+            y: { grid: { display: false }, ticks: { display: false }, border: { display: false } }
+          }
+        }
+      });
+
+      switchActiveScreenViewState('viewDashboard');
+    }
+
+    // ─── DROPDOWNS ───────────────────────────────────────────────────────────
+    function populateFormDropdownSelectors(methodSelId, recipeSelId) {
+      const mSel = document.getElementById(methodSelId);
+      const rSel = document.getElementById(recipeSelId);
+      mSel.innerHTML = "";
+      rSel.innerHTML = "<option value='None'>None (Straight Brew)</option>";
+      globalDatabaseCachedStore.baseLibrary.forEach(l => {
+        let o = document.createElement('option'); o.value = l.name; o.innerText = l.name; mSel.appendChild(o);
+      });
+      globalDatabaseCachedStore.savedRecipes.forEach(r => {
+        let o = document.createElement('option'); o.value = r; o.innerText = r; rSel.appendChild(o);
+      });
+    }
+
+    // ─── LOG NEW ─────────────────────────────────────────────────────────────
+    function routeToLogNew() {
+      switchActiveScreenViewState('viewLogNew');
+      document.getElementById('formNewLog').reset();
+      populateFormDropdownSelectors('lnMethod', 'lnRecipe');
+    }
+
+    // ─── LOG MOST RECENT ─────────────────────────────────────────────────────
+    function routeToLogMostRecent() {
+      if (!globalDatabaseCachedStore || globalDatabaseCachedStore.allUniqueCoffees.length === 0) {
+        alert("No logs available yet to duplicate.");
+        return;
+      }
+      const target = globalDatabaseCachedStore.allUniqueCoffees[globalDatabaseCachedStore.allUniqueCoffees.length - 1];
+      executeTargetedLogExistingInjection(target);
+    }
+
+    // ─── LOG EXISTING ────────────────────────────────────────────────────────
+    function routeToLogExisting() {
+      switchActiveScreenViewState('viewLogExisting');
+      const globSel = document.getElementById('selGlobalCoffeeSelector');
+      globSel.innerHTML = "";
+      globalDatabaseCachedStore.allUniqueCoffees.forEach(c => {
+        let o = document.createElement('option'); o.value = c.name; o.innerText = c.name; globSel.appendChild(o);
+      });
+      if (globalDatabaseCachedStore.allUniqueCoffees.length > 0) {
+        populateExistingCoffeeFields(globalDatabaseCachedStore.allUniqueCoffees[0].name);
+      }
+    }
+
+    function populateExistingCoffeeFields(coffeeName) {
+      const match = globalDatabaseCachedStore.allUniqueCoffees.find(c => c.name === coffeeName);
+      if (match) executeTargetedLogExistingInjection(match);
+    }
+
+    function executeTargetedLogExistingInjection(targetRecord) {
+      switchActiveScreenViewState('viewLogExisting');
+      document.getElementById('leOrigin').value = targetRecord.name;
+      document.getElementById('leProducer').value = targetRecord.producer;
+      document.getElementById('leProcessing').value = targetRecord.processing;
+      document.getElementById('leRoaster').value = targetRecord.roaster;
+      document.getElementById('leCupping').value = targetRecord.cupping;
+      populateFormDropdownSelectors('leMethod', 'leRecipe');
+      document.getElementById('selGlobalCoffeeSelector').value = targetRecord.name;
+    }
+
+    // ─── SUBMIT LOG ──────────────────────────────────────────────────────────
+    function handleLogFormSubmit(e, modeKey) {
+      e.preventDefault();
+      const prefix = modeKey === 'NEW' ? 'ln' : 'le';
+      const btn = document.getElementById(modeKey === 'NEW' ? 'btnNewLogSubmitSpinner' : 'btnExistingLogSubmitSpinner');
+
+      // Validate brew time format
+      const brewTimeRaw = document.getElementById(prefix + 'BrewTime').value.trim();
+      if (brewTimeRaw && !/^\d+:[0-5]\d$/.test(brewTimeRaw)) {
+        alert("Please enter brew time in M:SS format, e.g. 3:45");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Saving data to spreadsheet...";
+
+      const payload = {
+        origin: document.getElementById(prefix + 'Origin').value,
+        producer: document.getElementById(prefix + 'Producer').value,
+        processingMethod: document.getElementById(prefix + 'Processing').value,
+        roaster: document.getElementById(prefix + 'Roaster').value,
+        brewMethod: document.getElementById(prefix + 'Method').value,
+        recipe: document.getElementById(prefix + 'Recipe').value,
+        totalYield: document.getElementById(prefix + 'Yield').value,
+        grindSize: document.getElementById(prefix + 'Grind').value,
+        myScore: document.getElementById(prefix + 'MyScore').value,
+        cuppingScore: document.getElementById(prefix + 'Cupping').value || 0,
+        notes: document.getElementById(prefix + 'Notes').value,
+        waterTemp: document.getElementById(prefix + 'WaterTemp').value || '',
+        grinder: document.getElementById(prefix + 'Grinder').value || '',
+        brewTime: brewTimeRaw,
+        isFavRecipe: document.getElementById(prefix + 'FavRecipe').checked,
+        userContext: currentUser
+      };
+
+      google.script.run.withSuccessHandler(function() {
+        btn.disabled = false;
+        btn.innerText = "Save to coffee log";
+        returnToDashboard();
+      }).commitBrewLog(payload);
+    }
+
+    // ─── COFFEE HUB ──────────────────────────────────────────────────────────
+    function routeToCoffeeHubPage(coffeeName) {
+      document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
+      switchActiveScreenViewState('viewCoffeeDetails');
+
+      google.script.run.withSuccessHandler(function(res) {
+        document.getElementById('hubCoffeeTitle').innerText = res.name;
+        document.getElementById('hubCoffeeMetadataSub').innerText = `${res.producer} • ${res.processing} • ${res.roaster}`;
+        document.getElementById('hubCuppingScore').innerText = res.cuppingScore;
+        document.getElementById('hubAvUserScore').innerText = res.avUserScore;
+        document.getElementById('hubTimesBrewed').innerText = res.timesBrewed;
+
+        const ledger = document.getElementById('boxHubLogsLedger');
+        ledger.innerHTML = "";
+        res.logEntries.forEach(item => {
+          let div = document.createElement('div');
+          div.className = "p-3 bg-slate-50 border border-slate-200/60 rounded-2xl text-xs space-y-1";
+          // Build the metadata line (water temp / grinder / duration) as plain text,
+          // separated by a middle dot — no icons, matching the rest of the app's style.
+          let metaParts = [];
+          if (item.waterTemp) metaParts.push(`${item.waterTemp}°C`);
+          if (item.grinder) metaParts.push(item.grinder);
+          if (item.duration && item.duration !== '--') metaParts.push(item.duration);
+          let metaLine = metaParts.length ? `<div class="text-[10px] text-slate-500 font-medium">${metaParts.join(' • ')}</div>` : '';
+
+          div.innerHTML = `
+            <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              <span>${item.date}</span>
+              <span class="text-orange font-black">${item.score} ★</span>
+            </div>
+            <div class="text-slate-700 font-extrabold text-[11px]">${item.method} — ${item.recipe} (${item.yieldAmt}g, ${item.grind})</div>
+            ${metaLine}
+            ${item.notes ? `<p class="text-[11px] font-medium text-slate-500 m-0 leading-normal italic bg-white p-2 rounded-lg border border-slate-100 mt-1">"${item.notes}"</p>` : ''}
+          `;
+          ledger.appendChild(div);
+        });
+
+        const ctx = document.getElementById('chartHubVariabilityLine').getContext('2d');
+        if (coffeeHubLineChartInstance) coffeeHubLineChartInstance.destroy();
+        coffeeHubLineChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: res.timelineLabels.length ? res.timelineLabels : ['No Runs'],
+            datasets: [{
+              data: res.timelineSeconds.length ? res.timelineSeconds : [150],
+              borderColor: '#E45B13',
+              backgroundColor: 'rgba(228, 91, 19, 0.03)',
+              borderWidth: 2.5,
+              tension: 0.35,
+              pointRadius: 4,
+              pointBackgroundColor: '#E45B13',
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 8, weight: '700' }, color: '#94A3B8' } },
+              y: {
+                grid: { color: '#E2E8F0' },
+                ticks: {
+                  font: { size: 8, weight: '600' }, color: '#94A3B8',
+                  callback: function(value) {
+                    let mins = Math.floor(value / 60);
+                    let secs = value % 60;
+                    return mins + ":" + (secs < 10 ? '0' : '') + secs;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        document.getElementById('globalAppLoaderScreen').classList.add('hidden');
+      }).getCoffeeHubData(coffeeName, currentUser);
+    }
+
+    // ─── RECIPE PAGE ─────────────────────────────────────────────────────────
+    function routeToRecipePage(recipeName) {
+      switchActiveScreenViewState('viewRecipePage');
+      isEditingRecipeState = false;
+      document.getElementById('recipeModeRead').classList.remove('hidden');
+      document.getElementById('recipeModeWrite').classList.add('hidden');
+      document.getElementById('btnRecipeEditToggle').innerText = "Modify Config";
+      document.getElementById('lblReadRecipeTitle').innerText = recipeName;
+      document.getElementById('txtWriteRecipeName').value = recipeName;
+
+      const indexFooter = document.getElementById('recipeFooterIndexLinks');
+      indexFooter.innerHTML = "";
+      globalDatabaseCachedStore.savedRecipes.forEach(r => {
+        let span = document.createElement('span');
+        span.className = "cursor-pointer tap-target-fix bg-slate-100 hover:bg-orange/10 hover:text-orange px-2.5 py-1 rounded-lg text-[10px] transition-colors border border-slate-200/40";
+        span.innerText = r;
+        span.onclick = () => routeToRecipePage(r);
+        indexFooter.appendChild(span);
+      });
+
+      google.script.run.withSuccessHandler(function(profile) {
+        document.getElementById('txtWriteInstructionsMarkdown').value = profile.instructions;
+        renderParsedMarkdownHTMLEngine(profile.instructions);
+      }).getRecipeDetails(recipeName);
+    }
+
+    function toggleRecipeEditState() {
+      isEditingRecipeState = !isEditingRecipeState;
+      if (isEditingRecipeState) {
+        document.getElementById('recipeModeRead').classList.add('hidden');
+        document.getElementById('recipeModeWrite').classList.remove('hidden');
+        document.getElementById('btnRecipeEditToggle').innerText = "View Card";
+      } else {
+        document.getElementById('recipeModeRead').classList.remove('hidden');
+        document.getElementById('recipeModeWrite').classList.add('hidden');
+        document.getElementById('btnRecipeEditToggle').innerText = "Modify Config";
+        renderParsedMarkdownHTMLEngine(document.getElementById('txtWriteInstructionsMarkdown').value);
+      }
+    }
+
+    function triggerNewRecipeCreation() {
+      routeToRecipePage("New Custom Recipe Pattern");
+      toggleRecipeEditState();
+      document.getElementById('txtWriteRecipeName').value = "";
+    }
+
+    function renderParsedMarkdownHTMLEngine(markdownRawText) {
+      const container = document.getElementById('containerParsedMarkdownOutput');
+      if (!markdownRawText || markdownRawText.trim() === "") {
+        container.innerHTML = "<p class='italic text-slate-400 font-medium m-0'>No custom instructions created yet. Tap Modify Config above to add steps.</p>";
+        return;
+      }
+      const structuralLinesArray = markdownRawText.split('\n');
+      let html = "";
+      structuralLinesArray.forEach(line => {
+        let cleanStr = line.trim();
+        if (cleanStr.startsWith('#')) {
+          let txt = cleanStr.replace(/^#+\s*/, '');
+          html += `<h2>${txt}</h2>`;
+        } else if (cleanStr !== "") {
+          html += `<p>${cleanStr}</p>`;
+        }
+      });
+      container.innerHTML = html;
+    }
+
+    function commitRecipeChangeToServer() {
+      const rName = document.getElementById('txtWriteRecipeName').value.trim();
+      const rMarkdown = document.getElementById('txtWriteInstructionsMarkdown').value;
+      if (!rName) { alert("Please enter a recipe name."); return; }
+      const btn = document.getElementById('btnSaveRecipeSpinner');
+      btn.disabled = true;
+      btn.innerText = "Synchronizing data layers...";
+      google.script.run.withSuccessHandler(function() {
+        btn.disabled = false;
+        btn.innerText = "Save Recipe Configuration";
+        google.script.run.withSuccessHandler(function(updatedData) {
+          globalDatabaseCachedStore = updatedData;
+          routeToRecipePage(rName);
+        }).getDashboardData(currentUser);
+      }).commitRecipeCard(rName, rMarkdown);
+    }
+  </script>
+</body>
+</html>
