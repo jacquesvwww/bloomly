@@ -1303,29 +1303,62 @@
     }
 
     // ─── BREW HISTORY ────────────────────────────────────────────────────────
-    function routeToBrewHistory() {
+    async function fetchBrewHistory() {
+      const { data: rows, error } = await supabaseClient
+        .from('brews')
+        .select('*')
+        .order('brewed_at', { ascending: false });
+
+      if (error) {
+        console.error('Brew history fetch error:', error);
+        return [];
+      }
+
+      return rows.map(row => {
+        const totalSec = row.brew_time_seconds || 0;
+        return {
+          timestamp: new Date(row.brewed_at).getTime(),
+          date: new Date(row.brewed_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+          coffee: row.coffee_name || 'Unknown',
+          producer: row.producer || '',
+          processing: row.processing || '',
+          roaster: row.roaster || '',
+          method: row.brew_method || '',
+          recipe: row.recipe_name || 'None',
+          yieldAmt: row.yield_g || '0',
+          grind: row.grind_size || 'N/A',
+          score: row.my_score != null ? row.my_score : 0,
+          cupping: row.cupping_score != null ? row.cupping_score : '',
+          notes: row.notes || '',
+          waterTemp: row.water_temp || '',
+          grinder: row.grinder || '',
+          isFavCoffee: !!row.is_favorite,
+          duration: totalSec > 0 ? formatSecondsToMS(totalSec) : '--'
+        };
+      });
+    }
+
+    async function routeToBrewHistory() {
       document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
       switchActiveScreenViewState('viewBrewHistory');
 
-      google.script.run.withSuccessHandler(function(entries) {
-        brewHistoryCache = entries || [];
+      brewHistoryCache = await fetchBrewHistory();
 
-        const processingSel = document.getElementById('bhFilterProcessing');
-        const methodSel = document.getElementById('bhFilterMethod');
-        processingSel.innerHTML = "<option value='All'>All Processing Methods</option>";
-        methodSel.innerHTML = "<option value='All'>All Brew Methods</option>";
-        [...new Set(brewHistoryCache.map(e => e.processing).filter(Boolean))].forEach(p => {
-          let o = document.createElement('option'); o.value = p; o.innerText = p; processingSel.appendChild(o);
-        });
-        [...new Set(brewHistoryCache.map(e => e.method).filter(Boolean))].forEach(m => {
-          let o = document.createElement('option'); o.value = m; o.innerText = m; methodSel.appendChild(o);
-        });
-        document.getElementById('bhFilterScore').value = '0';
-        document.getElementById('bhFilterDate').value = 'All';
+      const processingSel = document.getElementById('bhFilterProcessing');
+      const methodSel = document.getElementById('bhFilterMethod');
+      processingSel.innerHTML = "<option value='All'>All Processing Methods</option>";
+      methodSel.innerHTML = "<option value='All'>All Brew Methods</option>";
+      [...new Set(brewHistoryCache.map(e => e.processing).filter(Boolean))].forEach(p => {
+        let o = document.createElement('option'); o.value = p; o.innerText = p; processingSel.appendChild(o);
+      });
+      [...new Set(brewHistoryCache.map(e => e.method).filter(Boolean))].forEach(m => {
+        let o = document.createElement('option'); o.value = m; o.innerText = m; methodSel.appendChild(o);
+      });
+      document.getElementById('bhFilterScore').value = '0';
+      document.getElementById('bhFilterDate').value = 'All';
 
-        renderBrewHistoryEntries(brewHistoryCache);
-        document.getElementById('globalAppLoaderScreen').classList.add('hidden');
-      }).getBrewHistory(currentUser);
+      renderBrewHistoryEntries(brewHistoryCache);
+      document.getElementById('globalAppLoaderScreen').classList.add('hidden');
     }
 
     function applyBrewHistoryFilters() {
@@ -1387,44 +1420,124 @@
       document.getElementById('pfErrorMsg').classList.add('hidden');
     }
 
-    function handleProfileUpdateSubmit(e) {
+    async function handleProfileUpdateSubmit(e) {
       e.preventDefault();
       const btn = document.getElementById('btnProfileSaveSpinner');
       const errBox = document.getElementById('pfErrorMsg');
       errBox.classList.add('hidden');
+      errBox.classList.remove('text-green-600', 'bg-green-50', 'border-green-100/80');
+      errBox.classList.add('text-red-500', 'bg-red-50', 'border-red-100/80');
 
-      const payload = {
-        currentEmail: currentUserEmail,
-        name: document.getElementById('pfName').value.trim(),
-        email: document.getElementById('pfEmail').value.trim(),
-        currentPassword: document.getElementById('pfCurrentPassword').value,
-        newPassword: document.getElementById('pfNewPassword').value
-      };
+      const newName = document.getElementById('pfName').value.trim();
+      const newEmail = document.getElementById('pfEmail').value.trim();
+      const currentPassword = document.getElementById('pfCurrentPassword').value;
+      const newPassword = document.getElementById('pfNewPassword').value;
 
       btn.disabled = true;
       btn.innerText = "Saving...";
 
-      google.script.run.withSuccessHandler(function(res) {
-        btn.disabled = false;
-        btn.innerText = "Save Changes";
-        if (!res.success) {
-          errBox.innerText = res.message;
+      // Changing the password requires confirming the current one first —
+      // Supabase's updateUser() would otherwise allow it just from having
+      // an active session, so we re-verify explicitly to match the old UX.
+      if (newPassword) {
+        if (!currentPassword) {
+          btn.disabled = false;
+          btn.innerText = "Save Changes";
+          errBox.innerText = "Enter your current password to set a new one.";
           errBox.classList.remove('hidden');
           return;
         }
-        currentUser = res.name;
-        currentUserEmail = res.email;
-        document.getElementById('dashUserBadge').innerText = currentUser;
-        document.getElementById('dashGreetingHeader').innerText = `Welcome, ${currentUser}. Let's brew some coffee!`;
-        document.getElementById('pfCurrentPassword').value = '';
-        document.getElementById('pfNewPassword').value = '';
-        saveSession(currentUser, currentUserEmail);
+        const { error: reauthError } = await supabaseClient.auth.signInWithPassword({ email: currentUserEmail, password: currentPassword });
+        if (reauthError) {
+          btn.disabled = false;
+          btn.innerText = "Save Changes";
+          errBox.innerText = "Current password is incorrect.";
+          errBox.classList.remove('hidden');
+          return;
+        }
+      }
+
+      const authUpdates = {};
+      if (newEmail && newEmail !== currentUserEmail) authUpdates.email = newEmail;
+      if (newPassword) authUpdates.password = newPassword;
+
+      if (Object.keys(authUpdates).length > 0) {
+        const { error: updateError } = await supabaseClient.auth.updateUser(authUpdates);
+        if (updateError) {
+          btn.disabled = false;
+          btn.innerText = "Save Changes";
+          errBox.innerText = updateError.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+      }
+
+      if (newName && newName !== currentUser) {
+        const { error: profileError } = await supabaseClient
+          .from('profiles')
+          .update({ name: newName })
+          .eq('id', currentUserId);
+        if (profileError) {
+          btn.disabled = false;
+          btn.innerText = "Save Changes";
+          errBox.innerText = profileError.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+      }
+
+      btn.disabled = false;
+      btn.innerText = "Save Changes";
+      currentUser = newName;
+      document.getElementById('dashUserBadge').innerText = currentUser;
+      document.getElementById('dashGreetingHeader').innerText = `Welcome, ${currentUser}. Let's brew some coffee!`;
+      document.getElementById('pfCurrentPassword').value = '';
+      document.getElementById('pfNewPassword').value = '';
+
+      if (authUpdates.email) {
+        // Supabase requires confirming a new email address before it takes
+        // effect, so currentUserEmail intentionally isn't updated yet.
+        errBox.classList.remove('text-red-500', 'bg-red-50', 'border-red-100/80');
+        errBox.classList.add('text-green-600', 'bg-green-50', 'border-green-100/80');
+        errBox.innerText = "Check your new email address to confirm the change.";
+        errBox.classList.remove('hidden');
+      } else {
         returnToDashboard();
-      }).updateUserProfile(payload);
+      }
     }
 
     // ─── RECIPE PAGE ─────────────────────────────────────────────────────────
-    function routeToRecipePage(recipeName) {
+    async function fetchRecipeDetails(recipeName) {
+      const { data: recipeRow } = await supabaseClient
+        .from('recipes')
+        .select('*')
+        .eq('name', recipeName)
+        .maybeSingle();
+
+      const rowToUse = recipeRow || (await supabaseClient
+        .from('base_library')
+        .select('*')
+        .eq('name', recipeName)
+        .maybeSingle()).data;
+
+      if (!rowToUse) {
+        return { name: recipeName, instructions: '', overview: { dose: '', yield: '', waterTemp: '', brewTime: '', ratio: '' } };
+      }
+
+      return {
+        name: rowToUse.name,
+        instructions: rowToUse.instructions || '',
+        overview: {
+          dose: rowToUse.overview_dose || '',
+          yield: rowToUse.overview_yield || '',
+          waterTemp: rowToUse.overview_water_temp || '',
+          brewTime: rowToUse.overview_brew_time || '',
+          ratio: rowToUse.overview_ratio || ''
+        }
+      };
+    }
+
+    async function routeToRecipePage(recipeName) {
       switchActiveScreenViewState('viewRecipePage');
       isEditingRecipeState = false;
       document.getElementById('recipeModeRead').classList.remove('hidden');
@@ -1443,16 +1556,15 @@
         indexFooter.appendChild(span);
       });
 
-      google.script.run.withSuccessHandler(function(profile) {
-        document.getElementById('txtWriteInstructionsMarkdown').value = profile.instructions;
-        renderParsedMarkdownHTMLEngine(profile.instructions);
-        renderOverviewCard(profile.overview);
-        document.getElementById('txtOverviewDose').value = (profile.overview && profile.overview.dose) || '';
-        document.getElementById('txtOverviewYield').value = (profile.overview && profile.overview.yield) || '';
-        document.getElementById('txtOverviewWaterTemp').value = (profile.overview && profile.overview.waterTemp) || '';
-        document.getElementById('txtOverviewBrewTime').value = (profile.overview && profile.overview.brewTime) || '';
-        document.getElementById('txtOverviewRatio').value = (profile.overview && profile.overview.ratio) || '';
-      }).getRecipeDetails(recipeName);
+      const profile = await fetchRecipeDetails(recipeName);
+      document.getElementById('txtWriteInstructionsMarkdown').value = profile.instructions;
+      renderParsedMarkdownHTMLEngine(profile.instructions);
+      renderOverviewCard(profile.overview);
+      document.getElementById('txtOverviewDose').value = (profile.overview && profile.overview.dose) || '';
+      document.getElementById('txtOverviewYield').value = (profile.overview && profile.overview.yield) || '';
+      document.getElementById('txtOverviewWaterTemp').value = (profile.overview && profile.overview.waterTemp) || '';
+      document.getElementById('txtOverviewBrewTime').value = (profile.overview && profile.overview.brewTime) || '';
+      document.getElementById('txtOverviewRatio').value = (profile.overview && profile.overview.ratio) || '';
     }
 
     function toggleRecipeEditState() {
@@ -1546,22 +1658,38 @@
       container.innerHTML = html;
     }
 
-    function commitRecipeChangeToServer() {
+    async function commitRecipeChangeToServer() {
       const rName = document.getElementById('txtWriteRecipeName').value.trim();
       const rMarkdown = document.getElementById('txtWriteInstructionsMarkdown').value;
-      const rOverview = buildOverviewString();
+      const rOverview = readOverviewInputsAsObject();
       if (!rName) { alert("Please enter a recipe name."); return; }
       const btn = document.getElementById('btnSaveRecipeSpinner');
       btn.disabled = true;
-      btn.innerText = "Synchronizing data layers...";
-      google.script.run.withSuccessHandler(function() {
-        btn.disabled = false;
-        btn.innerText = "Save Recipe Configuration";
-        google.script.run.withSuccessHandler(function(updatedData) {
-          globalDatabaseCachedStore = updatedData;
-          routeToRecipePage(rName);
-        }).getDashboardData(currentUser);
-      }).commitRecipeCard(rName, rMarkdown, rOverview);
+      btn.innerText = "Saving...";
+
+      const { error } = await supabaseClient
+        .from('recipes')
+        .upsert({
+          user_id: currentUserId,
+          name: rName,
+          instructions: rMarkdown,
+          overview_dose: rOverview.dose || null,
+          overview_yield: rOverview.yield || null,
+          overview_water_temp: rOverview.waterTemp || null,
+          overview_brew_time: rOverview.brewTime || null,
+          overview_ratio: rOverview.ratio || null
+        }, { onConflict: 'user_id,name' });
+
+      btn.disabled = false;
+      btn.innerText = "Save Recipe Configuration";
+
+      if (error) {
+        alert("Could not save this recipe: " + error.message);
+        return;
+      }
+
+      globalDatabaseCachedStore = await fetchDashboardData();
+      routeToRecipePage(rName);
     }
 
     // ─── AUTO LOGIN ──────────────────────────────────────────────────────────
