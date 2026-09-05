@@ -530,8 +530,8 @@
     // (Project Settings → API Keys in the Supabase dashboard). The publishable
     // key is safe to keep here — Row Level Security is what actually protects
     // the data, not secrecy of this key.
-    const SUPABASE_URL = 'https://yrrobxadzshlejaxbjzd.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_42xcGobjA5n-5H0PECX_Lg_N_kwLGY3';
+    const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XXXXXXXXXXXXXXXXXXXX';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     let globalDatabaseCachedStore = null;
@@ -539,6 +539,7 @@
     let coffeeHubLineChartInstance = null;
     let isEditingRecipeState = false;
     let currentUser = null;
+    let currentUserId = null;
     let currentUserEmail = null;
     let brewHistoryCache = [];
     let lastHubResponseData = null;
@@ -560,6 +561,7 @@
     // current session is, and react to auth.onAuthStateChange when it changes.
 
     async function loadUserProfileAndEnter(session) {
+      currentUserId = session.user.id;
       const { data: profile, error } = await supabaseClient
         .from('profiles')
         .select('name')
@@ -706,21 +708,166 @@
       synchronizeApplicationCoreEngine(false);
     }
 
+    // ─── DATE / TIME HELPERS ──────────────────────────────────────────────────
+    // These previously lived only in Code.gs (Apps Script). Now that the
+    // browser talks to Supabase directly, the same M:SS <-> seconds conversion
+    // has to happen client-side. brew_time_seconds is stored as a plain
+    // integer in Postgres, so there's no risk of the old Google Sheets
+    // time-format corruption bug recurring — this is purely display formatting.
+    function formatSecondsToMS(totalSeconds) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return m + ":" + (s < 10 ? "0" : "") + s;
+    }
+
+    function parseBrewTimeStringToSeconds(str) {
+      if (!str) return null;
+      const parts = str.split(':');
+      if (parts.length !== 2) return null;
+      const m = parseInt(parts[0], 10) || 0;
+      const s = parseInt(parts[1], 10) || 0;
+      return (m * 60) + s;
+    }
+
+    function extractLeadingNumber(raw) {
+      if (!raw) return null;
+      const match = raw.toString().match(/[\d.]+/);
+      return match ? parseFloat(match[0]) : null;
+    }
+
+    function formatDateShort(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    }
+
     // ─── SYNC ────────────────────────────────────────────────────────────────
-    function synchronizeApplicationCoreEngine(isFirstBootLoad) {
+    // Fetches this user's brews + recipes, plus the shared base_library, then
+    // computes the same aggregations Code.gs used to do server-side (favorite
+    // method, most popular coffees, recently brewed, known grinders). Row
+    // Level Security means these queries automatically return only the
+    // logged-in user's own rows — no need to filter by user_id client-side.
+    async function fetchDashboardData() {
+      const [brewsRes, recipesRes, baseRes] = await Promise.all([
+        supabaseClient.from('brews').select('*').order('brewed_at', { ascending: true }),
+        supabaseClient.from('recipes').select('*').order('name', { ascending: true }),
+        supabaseClient.from('base_library').select('*')
+      ]);
+
+      if (brewsRes.error) console.error('Error fetching brews:', brewsRes.error);
+      if (recipesRes.error) console.error('Error fetching recipes:', recipesRes.error);
+      if (baseRes.error) console.error('Error fetching base library:', baseRes.error);
+
+      return buildDashboardDataFromRows(brewsRes.data || [], recipesRes.data || [], baseRes.data || []);
+    }
+
+    function buildDashboardDataFromRows(brews, recipes, baseLibrary) {
+      const methodFrequencyMap = {};
+      const coffeeFrequencyMap = {};
+      const allUniqueCoffeesMap = {};
+      const lastBrewedByCoffee = {};
+      const lastUsedByGrinder = {};
+      let totalBrewSecondsSum = 0;
+      let validBrewSecondsCount = 0;
+      let mostRecentCoffeeName = "--";
+
+      brews.forEach(row => {
+        mostRecentCoffeeName = row.coffee_name || mostRecentCoffeeName;
+
+        const coffeeName = row.coffee_name || "Unknown Coffee";
+        coffeeFrequencyMap[coffeeName] = (coffeeFrequencyMap[coffeeName] || 0) + 1;
+
+        const method = row.brew_method || "Unknown Method";
+        methodFrequencyMap[method] = (methodFrequencyMap[method] || 0) + 1;
+
+        if (row.brew_time_seconds) {
+          totalBrewSecondsSum += row.brew_time_seconds;
+          validBrewSecondsCount++;
+        }
+
+        if (!allUniqueCoffeesMap[coffeeName]) {
+          allUniqueCoffeesMap[coffeeName] = {
+            name: row.coffee_name || "",
+            producer: row.producer || "",
+            processing: row.processing || "",
+            roaster: row.roaster || "",
+            cupping: row.cupping_score != null ? row.cupping_score : ""
+          };
+        }
+
+        const ts = new Date(row.brewed_at).getTime();
+        if (!lastBrewedByCoffee[coffeeName] || ts > lastBrewedByCoffee[coffeeName]) {
+          lastBrewedByCoffee[coffeeName] = ts;
+        }
+
+        const grinderName = (row.grinder || "").trim();
+        if (grinderName) {
+          const key = grinderName.toLowerCase();
+          if (!lastUsedByGrinder[key] || ts > lastUsedByGrinder[key].ts) {
+            lastUsedByGrinder[key] = { ts, name: grinderName };
+          }
+        }
+      });
+
+      let favMethod = "N/A", maxMethodCount = 0;
+      for (const m in methodFrequencyMap) {
+        if (methodFrequencyMap[m] > maxMethodCount) { maxMethodCount = methodFrequencyMap[m]; favMethod = m; }
+      }
+
+      let avgBrewTimeStr = "--";
+      if (validBrewSecondsCount > 0) {
+        const avgSecs = Math.round(totalBrewSecondsSum / validBrewSecondsCount);
+        avgBrewTimeStr = formatSecondsToMS(avgSecs);
+      }
+
+      const sortedCoffees = Object.keys(coffeeFrequencyMap).sort((a, b) => coffeeFrequencyMap[b] - coffeeFrequencyMap[a]);
+      const recentlyBrewedCoffees = Object.keys(lastBrewedByCoffee)
+        .sort((a, b) => lastBrewedByCoffee[b] - lastBrewedByCoffee[a])
+        .slice(0, 6);
+      const knownGrinders = Object.keys(lastUsedByGrinder)
+        .sort((a, b) => lastUsedByGrinder[b].ts - lastUsedByGrinder[a].ts)
+        .map(k => lastUsedByGrinder[k].name);
+
+      return {
+        totalThisMonth: brews.length,
+        favoriteMethod: favMethod,
+        averageBrewTime: avgBrewTimeStr,
+        mostRecentCoffeeName: mostRecentCoffeeName,
+        recentlyBrewedCoffees: recentlyBrewedCoffees,
+        savedRecipes: recipes.map(r => r.name),
+        baseLibrary: baseLibrary.map(item => ({
+          name: item.name,
+          icon: item.icon,
+          instructions: item.instructions,
+          overview: {
+            dose: item.overview_dose || "",
+            yield: item.overview_yield || "",
+            waterTemp: item.overview_water_temp || "",
+            brewTime: item.overview_brew_time || "",
+            ratio: item.overview_ratio || ""
+          }
+        })),
+        allUniqueCoffees: Object.values(allUniqueCoffeesMap),
+        knownGrinders: knownGrinders,
+        recentCoffeesChartData: {
+          labels: sortedCoffees.slice(0, 3),
+          counts: sortedCoffees.slice(0, 3).map(c => coffeeFrequencyMap[c])
+        }
+      };
+    }
+
+    async function synchronizeApplicationCoreEngine(isFirstBootLoad) {
       if (isFirstBootLoad) document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
 
-      google.script.run.withSuccessHandler(function(data) {
-        globalDatabaseCachedStore = data;
+      const data = await fetchDashboardData();
+      globalDatabaseCachedStore = data;
 
-        document.getElementById('mCount').innerText = data.totalThisMonth;
-        document.getElementById('mFav').innerText = data.favoriteMethod;
-        document.getElementById('mTime').innerText = data.averageBrewTime;
-        document.getElementById('lblRecentSubLabel').innerText = data.mostRecentCoffeeName;
+      document.getElementById('mCount').innerText = data.totalThisMonth;
+      document.getElementById('mFav').innerText = data.favoriteMethod;
+      document.getElementById('mTime').innerText = data.averageBrewTime;
+      document.getElementById('lblRecentSubLabel').innerText = data.mostRecentCoffeeName;
 
-        renderDashboardListsAndCharts(data);
-        document.getElementById('globalAppLoaderScreen').classList.add('hidden');
-      }).getDashboardData(currentUser);
+      renderDashboardListsAndCharts(data);
+      document.getElementById('globalAppLoaderScreen').classList.add('hidden');
     }
 
     // ─── DASHBOARD RENDER ────────────────────────────────────────────────────
@@ -987,7 +1134,7 @@
     }
 
     // ─── SUBMIT LOG ──────────────────────────────────────────────────────────
-    function handleLogFormSubmit(e, modeKey) {
+    async function handleLogFormSubmit(e, modeKey) {
       e.preventDefault();
       const prefix = modeKey === 'NEW' ? 'ln' : 'le';
       const btn = document.getElementById(modeKey === 'NEW' ? 'btnNewLogSubmitSpinner' : 'btnExistingLogSubmitSpinner');
@@ -1000,81 +1147,159 @@
       }
 
       btn.disabled = true;
-      btn.innerText = "Saving data to spreadsheet...";
+      btn.innerText = "Saving...";
 
-      const payload = {
-        origin: document.getElementById(prefix + 'Origin').value,
-        producer: document.getElementById(prefix + 'Producer').value,
-        processingMethod: document.getElementById(prefix + 'Processing').value,
-        roaster: document.getElementById(prefix + 'Roaster').value,
-        brewMethod: document.getElementById(prefix + 'Method').value,
-        recipe: document.getElementById(prefix + 'Recipe').value,
-        dose: document.getElementById(prefix + 'Dose').value,
-        totalYield: document.getElementById(prefix + 'Yield').value,
-        grindSize: document.getElementById(prefix + 'Grind').value,
-        myScore: document.getElementById(prefix + 'MyScore').value,
-        cuppingScore: document.getElementById(prefix + 'Cupping').value || 0,
-        notes: document.getElementById(prefix + 'Notes').value,
-        waterTemp: document.getElementById(prefix + 'WaterTemp').value || '',
-        grinder: document.getElementById(prefix + 'Grinder').value || '',
-        brewTime: brewTimeRaw,
-        isFavCoffee: document.getElementById(prefix + 'FavCoffee').checked,
-        userContext: currentUser
-      };
+      const { error } = await supabaseClient.from('brews').insert({
+        user_id: currentUserId,
+        coffee_name: document.getElementById(prefix + 'Origin').value,
+        producer: document.getElementById(prefix + 'Producer').value || null,
+        processing: document.getElementById(prefix + 'Processing').value || null,
+        roaster: document.getElementById(prefix + 'Roaster').value || null,
+        brew_method: document.getElementById(prefix + 'Method').value || null,
+        recipe_name: document.getElementById(prefix + 'Recipe').value || 'None',
+        dose_g: parseFloat(document.getElementById(prefix + 'Dose').value) || null,
+        yield_g: parseFloat(document.getElementById(prefix + 'Yield').value) || null,
+        grind_size: document.getElementById(prefix + 'Grind').value || null,
+        my_score: parseFloat(document.getElementById(prefix + 'MyScore').value) || null,
+        cupping_score: parseFloat(document.getElementById(prefix + 'Cupping').value) || null,
+        notes: document.getElementById(prefix + 'Notes').value || null,
+        water_temp: parseFloat(document.getElementById(prefix + 'WaterTemp').value) || null,
+        grinder: document.getElementById(prefix + 'Grinder').value || null,
+        is_favorite: document.getElementById(prefix + 'FavCoffee').checked,
+        brew_time_seconds: parseBrewTimeStringToSeconds(brewTimeRaw)
+      });
 
-      google.script.run.withSuccessHandler(function() {
-        btn.disabled = false;
-        btn.innerText = "Save to coffee log";
-        returnToDashboard();
-      }).commitBrewLog(payload);
+      btn.disabled = false;
+      btn.innerText = "Save to coffee log";
+
+      if (error) {
+        alert("Could not save this brew: " + error.message);
+        return;
+      }
+
+      returnToDashboard();
     }
 
     // ─── COFFEE HUB ──────────────────────────────────────────────────────────
-    function routeToCoffeeHubPage(coffeeName) {
+    async function fetchCoffeeHubData(coffeeName) {
+      const { data: rows, error } = await supabaseClient
+        .from('brews')
+        .select('*')
+        .eq('coffee_name', coffeeName)
+        .order('brewed_at', { ascending: true });
+
+      if (error) {
+        console.error('Coffee hub fetch error:', error);
+        return { name: coffeeName, producer: '', processing: '', roaster: '', cuppingScore: '--', avUserScore: '--', timesBrewed: 0, timelineLabels: [], timelineSeconds: [], timelineGrind: [], timelineYield: [], timelineScore: [], timelineWaterTemp: [], logEntries: [] };
+      }
+
+      let producerRef = '', processingRef = '', roasterRef = '', cuppingRef = '--';
+      let totalScore = 0, countScore = 0;
+      const timelineLabels = [], timelineSeconds = [], timelineGrind = [], timelineYield = [], timelineScoreVals = [], timelineWaterTemp = [];
+      const logEntries = [];
+
+      rows.forEach(row => {
+        producerRef = row.producer || producerRef;
+        processingRef = row.processing || processingRef;
+        roasterRef = row.roaster || roasterRef;
+        cuppingRef = (row.cupping_score != null) ? row.cupping_score : cuppingRef;
+
+        if (row.my_score != null) {
+          totalScore += row.my_score;
+          countScore++;
+        }
+
+        const totalSec = row.brew_time_seconds || 0;
+        const cleanDurStr = totalSec > 0 ? formatSecondsToMS(totalSec) : '--';
+        const formattedDate = formatDateShort(row.brewed_at);
+
+        timelineLabels.push(formattedDate);
+        timelineSeconds.push(totalSec);
+        timelineGrind.push(extractLeadingNumber(row.grind_size));
+        timelineYield.push(row.yield_g != null ? row.yield_g : null);
+        timelineScoreVals.push(row.my_score != null ? row.my_score : null);
+        timelineWaterTemp.push(row.water_temp != null ? row.water_temp : null);
+
+        logEntries.push({
+          date: formattedDate,
+          coffee: row.coffee_name || 'Unknown',
+          method: row.brew_method || 'V60',
+          recipe: row.recipe_name || 'None',
+          yieldAmt: row.yield_g || '0',
+          grind: row.grind_size || 'N/A',
+          score: row.my_score != null ? row.my_score : '--',
+          cupping: row.cupping_score != null ? row.cupping_score : 'N/A',
+          waterTemp: row.water_temp || '',
+          grinder: row.grinder || '',
+          duration: cleanDurStr,
+          notes: row.notes || '',
+          dose: row.dose_g || ''
+        });
+      });
+
+      return {
+        name: coffeeName,
+        producer: producerRef,
+        processing: processingRef,
+        roaster: roasterRef,
+        cuppingScore: cuppingRef,
+        avUserScore: countScore > 0 ? (totalScore / countScore).toFixed(1) : '--',
+        timesBrewed: logEntries.length,
+        timelineLabels,
+        timelineSeconds,
+        timelineGrind,
+        timelineYield,
+        timelineScore: timelineScoreVals,
+        timelineWaterTemp,
+        logEntries
+      };
+    }
+
+    async function routeToCoffeeHubPage(coffeeName) {
       document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
       switchActiveScreenViewState('viewCoffeeDetails');
       activeCompareVariable = null;
       updateCompareButtonStates();
 
-      google.script.run.withSuccessHandler(function(res) {
-        document.getElementById('hubCoffeeTitle').innerText = res.name;
-        document.getElementById('hubCoffeeMetadataSub').innerText = `${res.producer} • ${res.processing} • ${res.roaster}`;
-        document.getElementById('hubCuppingScore').innerText = res.cuppingScore;
-        document.getElementById('hubAvUserScore').innerText = res.avUserScore;
-        document.getElementById('hubTimesBrewed').innerText = res.timesBrewed;
+      const res = await fetchCoffeeHubData(coffeeName);
 
-        const ledger = document.getElementById('boxHubLogsLedger');
-        ledger.innerHTML = "";
-        res.logEntries.forEach(item => {
-          let div = document.createElement('div');
-          div.className = "p-3 bg-slate-50 border border-slate-200/60 rounded-2xl text-xs space-y-1";
-          // Build the metadata line (water temp / grinder / duration) as plain text,
-          // separated by a middle dot — no icons, matching the rest of the app's style.
-          let metaParts = [];
-          if (item.waterTemp) metaParts.push(`${item.waterTemp}°C`);
-          if (item.grinder) metaParts.push(item.grinder);
-          if (item.duration && item.duration !== '--') metaParts.push(item.duration);
-          let metaLine = metaParts.length ? `<div class="text-[10px] text-slate-500 font-medium">${metaParts.join(' • ')}</div>` : '';
+      document.getElementById('hubCoffeeTitle').innerText = res.name;
+      document.getElementById('hubCoffeeMetadataSub').innerText = `${res.producer} • ${res.processing} • ${res.roaster}`;
+      document.getElementById('hubCuppingScore').innerText = res.cuppingScore;
+      document.getElementById('hubAvUserScore').innerText = res.avUserScore;
+      document.getElementById('hubTimesBrewed').innerText = res.timesBrewed;
 
-          let doseYieldStr = item.dose ? `${item.dose}g → ${item.yieldAmt}g` : `${item.yieldAmt}g`;
+      const ledger = document.getElementById('boxHubLogsLedger');
+      ledger.innerHTML = "";
+      res.logEntries.forEach(item => {
+        let div = document.createElement('div');
+        div.className = "p-3 bg-slate-50 border border-slate-200/60 rounded-2xl text-xs space-y-1";
+        // Build the metadata line (water temp / grinder / duration) as plain text,
+        // separated by a middle dot — no icons, matching the rest of the app's style.
+        let metaParts = [];
+        if (item.waterTemp) metaParts.push(`${item.waterTemp}°C`);
+        if (item.grinder) metaParts.push(item.grinder);
+        if (item.duration && item.duration !== '--') metaParts.push(item.duration);
+        let metaLine = metaParts.length ? `<div class="text-[10px] text-slate-500 font-medium">${metaParts.join(' • ')}</div>` : '';
 
-          div.innerHTML = `
-            <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-              <span>${item.date}</span>
-              <span class="text-orange font-black">${item.score} ★</span>
-            </div>
-            <div class="text-slate-700 font-extrabold text-[11px]">${item.method} — ${item.recipe} (${doseYieldStr}, ${item.grind})</div>
-            ${metaLine}
-            ${item.notes ? `<p class="text-[11px] font-medium text-slate-500 m-0 leading-normal italic bg-white p-2 rounded-lg border border-slate-100 mt-1">"${item.notes}"</p>` : ''}
-          `;
-          ledger.appendChild(div);
-        });
+        let doseYieldStr = item.dose ? `${item.dose}g → ${item.yieldAmt}g` : `${item.yieldAmt}g`;
 
-        lastHubResponseData = res;
-        renderHubVariabilityChart(res);
+        div.innerHTML = `
+          <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <span>${item.date}</span>
+            <span class="text-orange font-black">${item.score} ★</span>
+          </div>
+          <div class="text-slate-700 font-extrabold text-[11px]">${item.method} — ${item.recipe} (${doseYieldStr}, ${item.grind})</div>
+          ${metaLine}
+          ${item.notes ? `<p class="text-[11px] font-medium text-slate-500 m-0 leading-normal italic bg-white p-2 rounded-lg border border-slate-100 mt-1">"${item.notes}"</p>` : ''}
+        `;
+        ledger.appendChild(div);
+      });
 
-        document.getElementById('globalAppLoaderScreen').classList.add('hidden');
-      }).getCoffeeHubData(coffeeName, currentUser);
+      lastHubResponseData = res;
+      renderHubVariabilityChart(res);
+
+      document.getElementById('globalAppLoaderScreen').classList.add('hidden');
     }
 
     // ─── BREW HISTORY ────────────────────────────────────────────────────────
