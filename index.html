@@ -21,10 +21,8 @@
     .recipe-markdown-body h2::before { content: ''; display: inline-block; width: 4px; height: 14px; background: #EA6227; border-radius: 2px; }
     .recipe-markdown-body p { font-size: 0.88rem; color: #475569; line-height: 1.5; margin-bottom: 0.8rem; font-weight: 400; }
     .tap-target-fix { -webkit-tap-highlight-color: transparent; }
-    /* Login screen */
+    /* Login / register screens */
     #viewLogin { min-height: 100vh; }
-    .user-card { transition: all 0.2s ease; }
-    .user-card:active { transform: scale(0.97); }
     /* Action buttons uniform style */
     .action-btn-primary { background-color: #EA6227; color: #FFFFFF; border-radius: 16px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; }
     .action-btn-primary:active { transform: scale(0.97); }
@@ -34,26 +32,71 @@
     .action-btn-outline:active { transform: scale(0.97); }
   </style>
 </head>
-<body class="p-4 max-w-md mx-auto min-h-screen pb-12 relative">
+<body class="p-4 max-w-md mx-auto min-h-screen pb-24 relative">
 
-  <!-- LOGIN SCREEN -->
-  <div id="viewLogin" class="flex flex-col justify-center items-center gap-6 py-16">
-    <div class="text-center space-y-1 mb-4">
-      <h1 class="text-sm font-black tracking-widest text-[#2A2A9A] uppercase">Bloomly</h1>
-      <h2 class="text-2xl font-black text-slate-800 tracking-tight">Who's brewing today?</h2>
-      <p class="text-xs text-slate-400 font-medium">Select your profile to personalise your experience</p>
+  <!-- LOGIN / REGISTER SCREEN -->
+  <div id="viewLogin" class="flex flex-col justify-center items-center py-14">
+    <div class="w-full max-w-sm">
+      <div class="flex flex-col items-center mb-7">
+        <img src="data:image/png;base64,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" alt="Bloomly" class="h-14 w-auto">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">bloomly</span>
+      </div>
+
+      <div class="bg-white border border-slate-200/60 rounded-full p-1.5 flex gap-1 shadow-sm mb-5">
+        <button id="authTabLogin" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-full font-bold text-xs bg-[#2A2A9A] text-white ring-2 ring-white shadow-md transition-all tap-target-fix">Log In</button>
+        <button id="authTabRegister" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-full font-bold text-xs text-slate-500 transition-all tap-target-fix">Sign Up</button>
+      </div>
+
+      <p id="loginErrorMsg" class="hidden text-sm text-red-500 font-bold bg-red-50 border border-red-100/80 rounded-2xl px-4 py-3.5 mb-4"></p>
+      <p id="registerErrorMsg" class="hidden text-sm text-red-500 font-bold bg-red-50 border border-red-100/80 rounded-2xl px-4 py-3.5 mb-4"></p>
+
+      <!-- LOG IN FORM -->
+      <form id="formLogin" onsubmit="handleLoginSubmit(event)" class="space-y-4 text-sm">
+        <div>
+          <label class="block font-bold text-slate-500 mb-1.5">Email</label>
+          <input type="email" id="loginEmail" required placeholder="you@example.com" class="w-full py-3 px-4 bg-white border border-slate-200/70 rounded-2xl shadow-sm text-sm focus:outline-none focus:border-orange">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-500 mb-1.5">Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full py-3 px-4 bg-white border border-slate-200/70 rounded-2xl shadow-sm text-sm focus:outline-none focus:border-orange">
+        </div>
+        <button type="submit" id="btnLoginSpinner" class="w-full btn-accent font-bold text-sm py-3 rounded-full mt-2 shadow-sm cursor-pointer">Log in</button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="formRegister" onsubmit="handleRegisterSubmit(event)" class="hidden space-y-4 text-sm">
+        <div>
+          <label class="block font-bold text-slate-500 mb-1.5">Name</label>
+          <input type="text" id="registerName" required placeholder="Jacques" class="w-full py-3 px-4 bg-white border border-slate-200/70 rounded-2xl shadow-sm text-sm focus:outline-none focus:border-orange">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-500 mb-1.5">Email</label>
+          <input type="email" id="registerEmail" required placeholder="you@example.com" class="w-full py-3 px-4 bg-white border border-slate-200/70 rounded-2xl shadow-sm text-sm focus:outline-none focus:border-orange">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-500 mb-1.5">Password</label>
+          <input type="password" id="registerPassword" required placeholder="••••••••" class="w-full py-3 px-4 bg-white border border-slate-200/70 rounded-2xl shadow-sm text-sm focus:outline-none focus:border-orange">
+        </div>
+        <button type="submit" id="btnRegisterSpinner" class="w-full btn-accent font-bold text-sm py-3 rounded-full mt-2 shadow-sm cursor-pointer">Sign up</button>
+      </form>
     </div>
-    <div class="w-full grid grid-cols-2 gap-4">
-      <div onclick="loginAs('Jacques')" class="user-card bg-white rounded-3xl p-6 text-center border border-slate-200/60 shadow-sm cursor-pointer">
-        <div class="w-14 h-14 rounded-full bg-[#EA6227]/10 flex items-center justify-center text-2xl font-black text-[#EA6227] mx-auto mb-3">J</div>
-        <span class="font-black text-slate-800 text-sm block">Jacques</span>
-        <span class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-0.5 block">Profile 1</span>
-      </div>
-      <div onclick="loginAs('Test')" class="user-card bg-white rounded-3xl p-6 text-center border border-slate-200/60 shadow-sm cursor-pointer">
-        <div class="w-14 h-14 rounded-full bg-[#2A2A9A]/10 flex items-center justify-center text-2xl font-black text-[#2A2A9A] mx-auto mb-3">E</div>
-        <span class="font-black text-slate-800 text-sm block">Test</span>
-        <span class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-0.5 block">Profile 2</span>
-      </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div id="bottomNavBar" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 shadow-[0_-2px_10px_rgba(44,62,53,0.05)] z-40">
+    <div class="max-w-md mx-auto grid grid-cols-3">
+      <button onclick="routeToBrewHistory()" id="navBtnHistory" class="flex flex-col items-center justify-center gap-1 py-2.5 tap-target-fix text-slate-400 transition-colors">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <span class="text-[9px] font-black uppercase tracking-wide">History</span>
+      </button>
+      <button onclick="returnToDashboard()" id="navBtnHome" class="flex flex-col items-center justify-center gap-1 py-2.5 tap-target-fix text-slate-400 transition-colors">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+        <span class="text-[9px] font-black uppercase tracking-wide">Home</span>
+      </button>
+      <button onclick="routeToProfile()" id="navBtnProfile" class="flex flex-col items-center justify-center gap-1 py-2.5 tap-target-fix text-slate-400 transition-colors">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+        <span class="text-[9px] font-black uppercase tracking-wide">Profile</span>
+      </button>
     </div>
   </div>
 
@@ -66,8 +109,7 @@
   <!-- DASHBOARD -->
   <div id="viewDashboard" class="space-y-5 hidden">
     <div class="text-center my-4 space-y-1">
-      <div class="flex items-center justify-between mb-1">
-        <button onclick="logoutUser()" class="text-[9px] font-black text-slate-400 uppercase tracking-wider hover:text-orange transition-colors tap-target-fix">← Switch User</button>
+      <div class="flex items-center justify-center mb-1">
         <span id="dashUserBadge" class="text-[9px] font-black text-[#2A2A9A] uppercase tracking-wider bg-[#2A2A9A]/10 px-2 py-0.5 rounded-full"></span>
       </div>
       <h1 class="text-sm font-black tracking-widest text-[#2A2A9A] uppercase">Bloomly</h1>
@@ -120,12 +162,12 @@
       </div>
     </div>
 
-    <!-- Favourite Coffees + Chart -->
+    <!-- Recently Brewed Coffees + Chart -->
     <div class="grid grid-cols-2 gap-3">
       <div class="card-shell p-4 flex flex-col justify-between min-h-[150px]">
         <div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">Your Favourite Coffees</span>
-          <div id="boxPopularCoffeesList" class="space-y-2 text-xs font-bold text-slate-800 underline decoration-slate-200 max-h-28 overflow-y-auto"></div>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">Recently Brewed Coffees</span>
+          <div id="boxRecentCoffeesList" class="space-y-2 text-xs font-bold text-slate-800 underline decoration-slate-200 max-h-28 overflow-y-auto"></div>
         </div>
       </div>
       <div class="card-shell p-3.5 flex flex-col justify-between min-h-[150px]">
@@ -139,18 +181,9 @@
     <!-- Recipe Library -->
     <div class="space-y-2.5">
       <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Recipe Library</h3>
-      <div id="boxBaseLibraryGrid" class="grid grid-cols-3 gap-2.5"></div>
+      <div id="boxBaseLibraryGrid" class="grid grid-cols-2 gap-2.5"></div>
     </div>
 
-    <!-- Quote Card -->
-    <div id="widgetQuoteCard" class="card-shell p-4 space-y-2 hidden">
-      <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Quote of the Day</span>
-      <p id="lblQuoteText" class="text-xs text-slate-600 font-medium italic leading-relaxed m-0">"Sourcing parameters..."</p>
-      <div class="flex items-center justify-between pt-1 border-t border-slate-100">
-        <span id="lblQuoteSource" class="text-[9px] font-black text-slate-400 uppercase">Origin Coffee</span>
-        <a id="lblQuoteLink" href="#" target="_blank" class="text-[10px] font-black text-orange underline tracking-tight">Read More</a>
-      </div>
-    </div>
   </div>
 
   <!-- LOG NEW -->
@@ -166,23 +199,28 @@
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Producer</label>
-        <input type="text" id="lnProducer" required placeholder="Carlos Montero" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+        <input type="text" id="lnProducer" placeholder="Carlos Montero (optional)" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Processing Method</label>
-        <input type="text" id="lnProcessing" required placeholder="Honey / Natural" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+        <input type="text" id="lnProcessing" placeholder="Honey / Natural (optional)" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Roaster</label>
-        <input type="text" id="lnRoaster" required placeholder="Square Mile" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+        <input type="text" id="lnRoaster" placeholder="Square Mile (optional)" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Brew Method</label>
-        <select id="lnMethod" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+        <input type="text" id="lnMethod" list="lnMethodList" placeholder="Add method or select" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium">
+        <datalist id="lnMethodList"></datalist>
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Recipe Profile</label>
         <select id="lnRecipe" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Dose (g)</label>
+        <input type="number" id="lnDose" step="0.1" required placeholder="15" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Total Yield (g)</label>
@@ -190,11 +228,11 @@
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Grind Size</label>
-        <input type="text" id="lnGrind" required placeholder="24 Clicks" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <input type="text" id="lnGrind" placeholder="24 Clicks (optional)" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">My Score (1.0 – 5.0)</label>
-        <input type="number" id="lnMyScore" step="0.1" max="5" required placeholder="4.2" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none">
+        <input type="number" id="lnMyScore" step="0.1" max="5" placeholder="4.2 (optional)" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Cupping Score</label>
@@ -206,7 +244,8 @@
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Grinder Used</label>
-        <input type="text" id="lnGrinder" placeholder="Comandante C40" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <input type="text" id="lnGrinder" list="lnGrinderList" placeholder="Comandante C40" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <datalist id="lnGrinderList"></datalist>
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Brew Time (M:SS)</label>
@@ -214,11 +253,11 @@
         <span class="text-[9px] text-slate-400 mt-0.5 block">Format: minutes:seconds e.g. 3:45</span>
       </div>
       <div class="flex items-center gap-2 pt-4">
-        <input type="checkbox" id="lnFavRecipe" class="w-4 h-4 accent-[#EA6227]">
-        <label for="lnFavRecipe" class="font-bold text-slate-500 cursor-pointer">Mark recipe as favourite</label>
+        <input type="checkbox" id="lnFavCoffee" class="w-4 h-4 accent-[#EA6227]">
+        <label for="lnFavCoffee" class="font-bold text-slate-500 cursor-pointer">Mark coffee as favourite</label>
       </div>
       <div class="col-span-2">
-        <label class="block font-bold text-slate-500 mb-1">Sensory Notes</label>
+        <label class="block font-bold text-slate-500 mb-1">Notes</label>
         <textarea id="lnNotes" rows="3" placeholder="Stunning stone fruit clarity. Super clean sweetness on finish." class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white"></textarea>
       </div>
       <button type="submit" id="btnNewLogSubmitSpinner" class="col-span-2 w-full btn-accent font-black py-3.5 rounded-xl mt-1 tracking-wide shadow-sm cursor-pointer">Save to coffee log</button>
@@ -256,11 +295,16 @@
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Brew Method</label>
-        <select id="leMethod" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+        <input type="text" id="leMethod" list="leMethodList" placeholder="Add method or select" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium">
+        <datalist id="leMethodList"></datalist>
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Recipe Profile</label>
         <select id="leRecipe" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:border-orange font-medium"></select>
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Dose (g)</label>
+        <input type="number" id="leDose" step="0.1" required placeholder="15" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:border-orange focus:bg-white outline-none">
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Total Yield (g)</label>
@@ -284,7 +328,8 @@
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Grinder Used</label>
-        <input type="text" id="leGrinder" placeholder="Comandante C40" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <input type="text" id="leGrinder" list="leGrinderList" placeholder="Comandante C40" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange">
+        <datalist id="leGrinderList"></datalist>
       </div>
       <div>
         <label class="block font-bold text-slate-500 mb-1">Brew Time (M:SS)</label>
@@ -292,15 +337,81 @@
         <span class="text-[9px] text-slate-400 mt-0.5 block">Format: minutes:seconds e.g. 3:45</span>
       </div>
       <div class="flex items-center gap-2 pt-4">
-        <input type="checkbox" id="leFavRecipe" class="w-4 h-4 accent-[#EA6227]">
-        <label for="leFavRecipe" class="font-bold text-slate-500 cursor-pointer">Mark recipe as favourite</label>
+        <input type="checkbox" id="leFavCoffee" class="w-4 h-4 accent-[#EA6227]">
+        <label for="leFavCoffee" class="font-bold text-slate-500 cursor-pointer">Mark coffee as favourite</label>
       </div>
       <div class="col-span-2">
-        <label class="block font-bold text-slate-500 mb-1">Sensory Notes</label>
+        <label class="block font-bold text-slate-500 mb-1">Notes</label>
         <textarea id="leNotes" rows="3" placeholder="Balanced out perfectly today. Juicy fruit profiles." class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:border-orange focus:bg-white outline-none"></textarea>
       </div>
       <button type="submit" id="btnExistingLogSubmitSpinner" class="col-span-2 w-full btn-accent font-black py-3.5 rounded-xl mt-1 tracking-wide shadow-sm cursor-pointer">Save to coffee log</button>
     </form>
+  </div>
+
+  <!-- BREW HISTORY -->
+  <div id="viewBrewHistory" class="hidden space-y-4">
+    <div class="text-center relative py-2 border-b border-slate-200/60">
+      <button onclick="returnToDashboard()" class="absolute left-0 top-3 text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <h2 class="text-2xl font-black text-orange tracking-tight">Brew History</h2>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2.5 text-xs">
+      <select id="bhFilterProcessing" onchange="applyBrewHistoryFilters()" class="w-full p-2.5 bg-white border border-slate-200/80 rounded-xl font-bold outline-none">
+        <option value="All">All Processing Methods</option>
+      </select>
+      <select id="bhFilterMethod" onchange="applyBrewHistoryFilters()" class="w-full p-2.5 bg-white border border-slate-200/80 rounded-xl font-bold outline-none">
+        <option value="All">All Brew Methods</option>
+      </select>
+      <select id="bhFilterScore" onchange="applyBrewHistoryFilters()" class="w-full p-2.5 bg-white border border-slate-200/80 rounded-xl font-bold outline-none">
+        <option value="0">Any Score</option>
+        <option value="3">3.0+ ★</option>
+        <option value="3.5">3.5+ ★</option>
+        <option value="4">4.0+ ★</option>
+        <option value="4.5">4.5+ ★</option>
+      </select>
+      <select id="bhFilterDate" onchange="applyBrewHistoryFilters()" class="w-full p-2.5 bg-white border border-slate-200/80 rounded-xl font-bold outline-none">
+        <option value="All">All Time</option>
+        <option value="7">Last 7 Days</option>
+        <option value="30">Last 30 Days</option>
+        <option value="90">Last 90 Days</option>
+      </select>
+    </div>
+
+    <div id="boxBrewHistoryLedger" class="space-y-2.5"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="viewProfile" class="hidden space-y-4">
+    <div class="text-center relative py-2 border-b border-slate-200/60">
+      <button onclick="returnToDashboard()" class="absolute left-0 top-3 text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <h2 class="text-2xl font-black text-orange tracking-tight">Your Profile</h2>
+    </div>
+
+    <form id="formProfileUpdate" onsubmit="handleProfileUpdateSubmit(event)" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 space-y-3.5 text-xs">
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Name</label>
+        <input type="text" id="pfName" required class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 mb-1">Email</label>
+        <input type="email" id="pfEmail" required class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+      </div>
+      <div class="pt-2 border-t border-slate-100 space-y-3.5">
+        <span class="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Change Password (optional)</span>
+        <div>
+          <label class="block font-bold text-slate-500 mb-1">Current Password</label>
+          <input type="password" id="pfCurrentPassword" placeholder="Required only if changing password" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-500 mb-1">New Password</label>
+          <input type="password" id="pfNewPassword" placeholder="Leave blank to keep current password" class="w-full p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl focus:outline-none focus:border-orange focus:bg-white">
+        </div>
+      </div>
+      <p id="pfErrorMsg" class="text-[11px] text-red-500 font-bold m-0 hidden"></p>
+      <button type="submit" id="btnProfileSaveSpinner" class="w-full btn-accent font-black py-3.5 rounded-xl mt-1 tracking-wide shadow-sm cursor-pointer">Save Changes</button>
+    </form>
+
+    <button onclick="logoutUser()" class="w-full bg-white border border-slate-200/80 text-slate-500 font-black py-3 rounded-xl text-xs tracking-wide tap-target-fix">Log Out</button>
   </div>
 
   <!-- COFFEE DETAILS HUB -->
@@ -327,9 +438,30 @@
     </div>
 
     <div class="bg-white p-4 rounded-3xl border border-slate-200/60 shadow-xs space-y-2">
-      <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Brew Time Variability (Seconds)</span>
+      <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Brew Time Variability (Minutes)</span>
       <div class="w-full h-44 relative">
         <canvas id="chartHubVariabilityLine"></canvas>
+      </div>
+      <div class="pt-2 border-t border-slate-100 space-y-2.5">
+        <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Compare brew time against</span>
+        <div class="flex items-center justify-center gap-4">
+        <div class="flex flex-col items-center gap-1">
+          <button id="cmpBtn_grind" onclick="selectCompareVariable('grind')" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-black transition-all tap-target-fix">GR</button>
+          <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Grind</span>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <button id="cmpBtn_yieldAmt" onclick="selectCompareVariable('yieldAmt')" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-black transition-all tap-target-fix">YLD</button>
+          <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Yield</span>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <button id="cmpBtn_score" onclick="selectCompareVariable('score')" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-black transition-all tap-target-fix">SCR</button>
+          <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Score</span>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <button id="cmpBtn_waterTemp" onclick="selectCompareVariable('waterTemp')" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-black transition-all tap-target-fix">TMP</button>
+          <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Temp</span>
+        </div>
+        </div>
       </div>
     </div>
 
@@ -343,11 +475,17 @@
   <div id="viewRecipePage" class="hidden space-y-4">
     <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
       <button onclick="returnToDashboard()" class="text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
-      <button onclick="toggleRecipeEditState()" id="btnRecipeEditToggle" class="text-orange font-black text-xs bg-orange/10 px-4 py-1.5 rounded-full tap-target-fix">Modify Config</button>
+      <button onclick="toggleRecipeEditState()" id="btnRecipeEditToggle" class="text-orange font-black text-xs bg-orange/10 px-4 py-1.5 rounded-full tap-target-fix">Update Recipe</button>
     </div>
 
     <div id="recipeModeRead" class="space-y-4">
       <h1 id="lblReadRecipeTitle" class="text-2xl font-black text-orange tracking-tight text-center leading-tight">Tetsu Kasuya 4:6 Method</h1>
+
+      <div id="recipeOverviewCard" class="hidden bg-white rounded-3xl border border-slate-200/60 shadow-xs p-4">
+        <span class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Recipe Overview</span>
+        <div id="recipeOverviewGrid" class="flex flex-wrap gap-2.5"></div>
+      </div>
+
       <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-xs">
         <div id="containerParsedMarkdownOutput" class="recipe-markdown-body"></div>
       </div>
@@ -357,6 +495,16 @@
       <div>
         <label class="block font-bold text-slate-500 text-xs mb-1">Recipe Name</label>
         <input type="text" id="txtWriteRecipeName" placeholder="E.g., Tetsu Kasuya 4:6 Method" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:outline-none focus:bg-white focus:border-orange">
+      </div>
+      <div>
+        <label class="block font-bold text-slate-500 text-xs mb-1">Recipe Overview</label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <input type="text" id="txtOverviewDose" placeholder="Dose e.g. 15g" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-orange">
+          <input type="text" id="txtOverviewYield" placeholder="Yield e.g. 250g" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-orange">
+          <input type="text" id="txtOverviewWaterTemp" placeholder="Water Temp e.g. 93°C" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-orange">
+          <input type="text" id="txtOverviewBrewTime" placeholder="Brew Time e.g. 3:00" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-orange">
+          <input type="text" id="txtOverviewRatio" placeholder="Ratio e.g. 1:16.7" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-orange col-span-2">
+        </div>
       </div>
       <div>
         <label class="block font-bold text-slate-500 text-xs mb-1">Instructions</label>
@@ -381,6 +529,10 @@
     let coffeeHubLineChartInstance = null;
     let isEditingRecipeState = false;
     let currentUser = null;
+    let currentUserEmail = null;
+    let brewHistoryCache = [];
+    let lastHubResponseData = null;
+    let activeCompareVariable = null;
 
     const ICON_VECTOR_COLLECTION = {
       "v60-cone": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v2H3zM5 5l4 14h6l4-14M9 19h6v2H9z"/></svg>`,
@@ -391,28 +543,134 @@
       "timemore-ribbed": `<svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18v1H3zm3 1l3 13h6l3-13M8 9h8M9 14h6"/></svg>`
     };
 
-    // ─── LOGIN ───────────────────────────────────────────────────────────────
-    function loginAs(userName) {
-      currentUser = userName;
-      document.getElementById('viewLogin').classList.add('hidden');
-      document.getElementById('dashUserBadge').innerText = userName;
-      document.getElementById('dashGreetingHeader').innerText = `Welcome, ${userName}. Let's brew some coffee!`;
+    // ─── LOGIN / REGISTER / SESSION ──────────────────────────────────────────
+    const SESSION_STORAGE_KEY = 'bloomlySession';
+
+    function saveSession(name, email) {
+      try { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ name, email })); } catch (e) {}
+    }
+
+    function loadSession() {
+      try { return JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || 'null'); } catch (e) { return null; }
+    }
+
+    function clearSession() {
+      try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) {}
+    }
+
+    function applyLoggedInSession(name, email) {
+      currentUser = name;
+      currentUserEmail = email;
+      document.getElementById('dashUserBadge').innerText = name;
+      document.getElementById('dashGreetingHeader').innerText = `Welcome, ${name}. Let's brew some coffee!`;
+      saveSession(name, email);
       synchronizeApplicationCoreEngine(true);
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnLoginSpinner');
+      const errBox = document.getElementById('loginErrorMsg');
+      errBox.classList.add('hidden');
+
+      const payload = {
+        email: document.getElementById('loginEmail').value.trim(),
+        password: document.getElementById('loginPassword').value
+      };
+
+      btn.disabled = true;
+      btn.innerText = "Logging in...";
+
+      google.script.run.withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.innerText = "Log in";
+        if (!res.success) {
+          errBox.innerText = res.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+        document.getElementById('formLogin').reset();
+        applyLoggedInSession(res.name, res.email);
+      }).loginUser(payload);
+    }
+
+    function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnRegisterSpinner');
+      const errBox = document.getElementById('registerErrorMsg');
+      errBox.classList.add('hidden');
+
+      const payload = {
+        name: document.getElementById('registerName').value.trim(),
+        email: document.getElementById('registerEmail').value.trim(),
+        password: document.getElementById('registerPassword').value
+      };
+
+      btn.disabled = true;
+      btn.innerText = "Creating account...";
+
+      google.script.run.withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.innerText = "Sign up";
+        if (!res.success) {
+          errBox.innerText = res.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+        document.getElementById('formRegister').reset();
+        applyLoggedInSession(res.name, res.email);
+      }).registerUser(payload);
+    }
+
+    function switchAuthTab(tab) {
+      const activeClasses = 'flex-1 py-2 rounded-full font-bold text-xs bg-[#2A2A9A] text-white ring-2 ring-white shadow-md transition-all tap-target-fix';
+      const inactiveClasses = 'flex-1 py-2 rounded-full font-bold text-xs text-slate-500 transition-all tap-target-fix';
+      document.getElementById('authTabLogin').className = tab === 'login' ? activeClasses : inactiveClasses;
+      document.getElementById('authTabRegister').className = tab === 'register' ? activeClasses : inactiveClasses;
+      document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('formRegister').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('loginErrorMsg').classList.add('hidden');
+      document.getElementById('registerErrorMsg').classList.add('hidden');
     }
 
     function logoutUser() {
       currentUser = null;
+      currentUserEmail = null;
       globalDatabaseCachedStore = null;
+      clearSession();
+      switchAuthTab('login');
       switchActiveScreenViewState('viewLogin');
     }
 
     // ─── ROUTING ─────────────────────────────────────────────────────────────
     function switchActiveScreenViewState(targetViewId) {
-      ['viewLogin','viewDashboard','viewLogNew','viewLogExisting','viewCoffeeDetails','viewRecipePage'].forEach(id => {
+      ['viewLogin','viewDashboard','viewLogNew','viewLogExisting','viewCoffeeDetails','viewRecipePage','viewBrewHistory','viewProfile'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
       document.getElementById(targetViewId).classList.remove('hidden');
       window.scrollTo(0, 0);
+
+      const nav = document.getElementById('bottomNavBar');
+      if (targetViewId === 'viewLogin') {
+        nav.classList.add('hidden');
+      } else {
+        nav.classList.remove('hidden');
+        updateNavActiveState(targetViewId);
+      }
+    }
+
+    function updateNavActiveState(targetViewId) {
+      const tabsByView = { viewBrewHistory: 'navBtnHistory', viewDashboard: 'navBtnHome', viewProfile: 'navBtnProfile' };
+      ['navBtnHistory', 'navBtnHome', 'navBtnProfile'].forEach(id => {
+        const btn = document.getElementById(id);
+        btn.classList.remove('text-orange');
+        btn.classList.add('text-slate-400');
+      });
+      const activeId = tabsByView[targetViewId];
+      if (activeId) {
+        document.getElementById(activeId).classList.remove('text-slate-400');
+        document.getElementById(activeId).classList.add('text-orange');
+      }
     }
 
     function returnToDashboard() {
@@ -433,20 +691,7 @@
         document.getElementById('lblRecentSubLabel').innerText = data.mostRecentCoffeeName;
 
         renderDashboardListsAndCharts(data);
-
-        if (isFirstBootLoad) {
-          google.script.run.withSuccessHandler(function(quoteObj) {
-            if (quoteObj && quoteObj.text) {
-              document.getElementById('lblQuoteText').innerText = `"${quoteObj.text}"`;
-              document.getElementById('lblQuoteSource').innerText = quoteObj.source;
-              document.getElementById('lblQuoteLink').href = quoteObj.link;
-              document.getElementById('widgetQuoteCard').classList.remove('hidden');
-            }
-            document.getElementById('globalAppLoaderScreen').classList.add('hidden');
-          }).getScrapedCoffeeQuote();
-        } else {
-          document.getElementById('globalAppLoaderScreen').classList.add('hidden');
-        }
+        document.getElementById('globalAppLoaderScreen').classList.add('hidden');
       }).getDashboardData(currentUser);
     }
 
@@ -462,33 +707,37 @@
         recBox.appendChild(p);
       });
 
-      const popBox = document.getElementById('boxPopularCoffeesList');
-      popBox.innerHTML = data.popularCoffeesList.length ? "" : "<p class='text-slate-400 font-normal italic m-0'>Log brews to compute charts.</p>";
-      data.popularCoffeesList.forEach(c => {
+      const recentBox = document.getElementById('boxRecentCoffeesList');
+      const recentCoffees = data.recentlyBrewedCoffees || [];
+      recentBox.innerHTML = recentCoffees.length ? "" : "<p class='text-slate-400 font-normal italic m-0'>Log brews to see them here.</p>";
+      recentCoffees.forEach(c => {
         let p = document.createElement('p');
         p.className = "cursor-pointer tap-target-fix truncate hover:text-orange transition-colors py-0.5";
         p.innerText = c;
         p.onclick = () => routeToCoffeeHubPage(c);
-        popBox.appendChild(p);
+        recentBox.appendChild(p);
       });
 
       const libGrid = document.getElementById('boxBaseLibraryGrid');
       libGrid.innerHTML = "";
       data.baseLibrary.forEach(item => {
         let div = document.createElement('div');
-        div.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-xs flex flex-col items-center justify-center text-center cursor-pointer tap-target-fix active:scale-95 transition-transform min-h-[90px]";
+        div.className = "bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-xs flex items-center gap-3 text-left cursor-pointer tap-target-fix active:scale-95 transition-transform min-h-[76px]";
         div.onclick = () => routeToRecipePage(item.name);
         let vectorIconStringSvg = ICON_VECTOR_COLLECTION[item.icon] || ICON_VECTOR_COLLECTION["v60-cone"];
         div.innerHTML = `
-          <div class="w-9 h-9 mb-1.5 flex items-center justify-center text-orange bg-orange/10 rounded-xl">${vectorIconStringSvg}</div>
-          <span class="text-[11px] font-black text-slate-800 tracking-tight block max-w-full truncate">${item.name}</span>
-          <span class="text-[8px] font-bold text-slate-400 block mt-0.5 uppercase tracking-wide">Recipe</span>
+          <div class="w-11 h-11 flex-shrink-0 flex items-center justify-center text-orange bg-orange/10 rounded-xl">${vectorIconStringSvg}</div>
+          <div class="min-w-0 flex-1">
+            <span class="text-[12px] font-black text-slate-800 tracking-tight block truncate">${item.name}</span>
+            <span class="text-[9px] font-medium text-slate-400 block mt-0.5 uppercase tracking-wide">Recipe</span>
+          </div>
         `;
         libGrid.appendChild(div);
       });
 
-      const ctx = document.getElementById('chartPopularityDashboard').getContext('2d');
       if (dashboardBarChartInstance) dashboardBarChartInstance.destroy();
+      const freshDashCanvas = resetCanvas('chartPopularityDashboard');
+      const ctx = freshDashCanvas.getContext('2d');
       const safetyLabels = data.recentCoffeesChartData.labels.length ? data.recentCoffeesChartData.labels.map(l => l.substring(0, 8) + '..') : ['None'];
       const safetyCounts = data.recentCoffeesChartData.counts.length ? data.recentCoffeesChartData.counts : [0];
       dashboardBarChartInstance = new Chart(ctx, {
@@ -507,7 +756,124 @@
       switchActiveScreenViewState('viewDashboard');
     }
 
-    // ─── DROPDOWNS ───────────────────────────────────────────────────────────
+    // ─── CHART CANVAS RESET ──────────────────────────────────────────────────
+    // Chart.js can leave inline width/height on a <canvas> after destroy(), and
+    // recreating a chart on that same element can cause it to visibly grow or
+    // "jump" in size on repeat navigations. Swapping in a fresh, unstyled canvas
+    // node before each render guarantees no leftover sizing carries over.
+    function resetCanvas(canvasId) {
+      const old = document.getElementById(canvasId);
+      const fresh = old.cloneNode(false);
+      old.parentNode.replaceChild(fresh, old);
+      return fresh;
+    }
+
+    // ─── COFFEE HUB CHART COMPARISON ─────────────────────────────────────────
+    // Lets the user overlay at most one extra variable (grind size, yield,
+    // score, or water temp) against the brew-time timeline, via the small
+    // circular selector buttons under the chart.
+    const COMPARE_VARIABLE_META = {
+      grind: { label: 'Grind Size', color: '#2A2A9A' },
+      yieldAmt: { label: 'Yield (g)', color: '#16A34A' },
+      score: { label: 'My Score', color: '#D97706' },
+      waterTemp: { label: 'Water Temp (°C)', color: '#DB2777' }
+    };
+
+    function selectCompareVariable(varKey) {
+      activeCompareVariable = (activeCompareVariable === varKey) ? null : varKey;
+      updateCompareButtonStates();
+      if (lastHubResponseData) renderHubVariabilityChart(lastHubResponseData);
+    }
+
+    function updateCompareButtonStates() {
+      Object.keys(COMPARE_VARIABLE_META).forEach(key => {
+        const btn = document.getElementById('cmpBtn_' + key);
+        if (!btn) return;
+        if (activeCompareVariable === key) {
+          btn.className = 'w-10 h-10 rounded-full bg-[#2A2A9A] text-white flex items-center justify-center text-[9px] font-black shadow-sm transition-all tap-target-fix';
+        } else {
+          btn.className = 'w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center text-[9px] font-black transition-all tap-target-fix';
+        }
+      });
+    }
+
+    function renderHubVariabilityChart(res) {
+      if (coffeeHubLineChartInstance) coffeeHubLineChartInstance.destroy();
+      const freshHubCanvas = resetCanvas('chartHubVariabilityLine');
+      const ctx = freshHubCanvas.getContext('2d');
+
+      const datasets = [{
+        label: 'Brew Time',
+        data: res.timelineSeconds.length ? res.timelineSeconds : [150],
+        borderColor: '#E45B13',
+        backgroundColor: 'rgba(228, 91, 19, 0.03)',
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: '#E45B13',
+        fill: true,
+        yAxisID: 'y'
+      }];
+
+      const scalesConfig = {
+        x: { grid: { display: false }, ticks: { font: { size: 8, weight: '700' }, color: '#94A3B8' } },
+        y: {
+          grid: { color: '#E2E8F0' },
+          ticks: {
+            font: { size: 8, weight: '600' }, color: '#94A3B8',
+            callback: function(value) {
+              let mins = Math.floor(value / 60);
+              let secs = value % 60;
+              return mins + ":" + (secs < 10 ? '0' : '') + secs;
+            }
+          }
+        }
+      };
+
+      const compareDataByKey = {
+        grind: res.timelineGrind,
+        yieldAmt: res.timelineYield,
+        score: res.timelineScore,
+        waterTemp: res.timelineWaterTemp
+      };
+
+      if (activeCompareVariable && COMPARE_VARIABLE_META[activeCompareVariable]) {
+        const meta = COMPARE_VARIABLE_META[activeCompareVariable];
+        const compareData = compareDataByKey[activeCompareVariable] || [];
+        datasets.push({
+          label: meta.label,
+          data: compareData.length ? compareData : [null],
+          borderColor: meta.color,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [4, 3],
+          tension: 0.35,
+          pointRadius: 3,
+          pointBackgroundColor: meta.color,
+          fill: false,
+          spanGaps: true,
+          yAxisID: 'y1'
+        });
+        scalesConfig.y1 = {
+          position: 'right',
+          grid: { display: false },
+          ticks: { font: { size: 8, weight: '600' }, color: meta.color }
+        };
+      }
+
+      coffeeHubLineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: res.timelineLabels.length ? res.timelineLabels : ['No Runs'],
+          datasets: datasets
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: datasets.length > 1, labels: { font: { size: 8, weight: '700' }, boxWidth: 10 } } },
+          scales: scalesConfig
+        }
+      });
+    }
     function populateFormDropdownSelectors(methodSelId, recipeSelId) {
       const mSel = document.getElementById(methodSelId);
       const rSel = document.getElementById(recipeSelId);
@@ -516,16 +882,36 @@
       globalDatabaseCachedStore.baseLibrary.forEach(l => {
         let o = document.createElement('option'); o.value = l.name; o.innerText = l.name; mSel.appendChild(o);
       });
+      // Espresso is always offered as a brew method, even if it's not in the BaseLibrary sheet.
+      const hasEspresso = globalDatabaseCachedStore.baseLibrary.some(l => (l.name || '').toLowerCase() === 'espresso');
+      if (!hasEspresso) {
+        let o = document.createElement('option'); o.value = 'Espresso'; o.innerText = 'Espresso'; mSel.appendChild(o);
+      }
       globalDatabaseCachedStore.savedRecipes.forEach(r => {
         let o = document.createElement('option'); o.value = r; o.innerText = r; rSel.appendChild(o);
       });
+    }
+
+    // ─── GRINDER SUGGESTIONS ─────────────────────────────────────────────────
+    function populateGrinderField(inputId, listId) {
+      const grinders = (globalDatabaseCachedStore && globalDatabaseCachedStore.knownGrinders) || [];
+      const dl = document.getElementById(listId);
+      dl.innerHTML = "";
+      grinders.forEach(g => {
+        let o = document.createElement('option');
+        o.value = g;
+        dl.appendChild(o);
+      });
+      const input = document.getElementById(inputId);
+      if (!input.value && grinders.length) input.value = grinders[0];
     }
 
     // ─── LOG NEW ─────────────────────────────────────────────────────────────
     function routeToLogNew() {
       switchActiveScreenViewState('viewLogNew');
       document.getElementById('formNewLog').reset();
-      populateFormDropdownSelectors('lnMethod', 'lnRecipe');
+      populateFormDropdownSelectors('lnMethodList', 'lnRecipe');
+      populateGrinderField('lnGrinder', 'lnGrinderList');
     }
 
     // ─── LOG MOST RECENT ─────────────────────────────────────────────────────
@@ -553,17 +939,22 @@
 
     function populateExistingCoffeeFields(coffeeName) {
       const match = globalDatabaseCachedStore.allUniqueCoffees.find(c => c.name === coffeeName);
-      if (match) executeTargetedLogExistingInjection(match);
+      if (match) fillLogExistingFields(match);
     }
 
     function executeTargetedLogExistingInjection(targetRecord) {
       switchActiveScreenViewState('viewLogExisting');
+      fillLogExistingFields(targetRecord);
+    }
+
+    function fillLogExistingFields(targetRecord) {
       document.getElementById('leOrigin').value = targetRecord.name;
       document.getElementById('leProducer').value = targetRecord.producer;
       document.getElementById('leProcessing').value = targetRecord.processing;
       document.getElementById('leRoaster').value = targetRecord.roaster;
       document.getElementById('leCupping').value = targetRecord.cupping;
-      populateFormDropdownSelectors('leMethod', 'leRecipe');
+      populateFormDropdownSelectors('leMethodList', 'leRecipe');
+      populateGrinderField('leGrinder', 'leGrinderList');
       document.getElementById('selGlobalCoffeeSelector').value = targetRecord.name;
     }
 
@@ -590,6 +981,7 @@
         roaster: document.getElementById(prefix + 'Roaster').value,
         brewMethod: document.getElementById(prefix + 'Method').value,
         recipe: document.getElementById(prefix + 'Recipe').value,
+        dose: document.getElementById(prefix + 'Dose').value,
         totalYield: document.getElementById(prefix + 'Yield').value,
         grindSize: document.getElementById(prefix + 'Grind').value,
         myScore: document.getElementById(prefix + 'MyScore').value,
@@ -598,7 +990,7 @@
         waterTemp: document.getElementById(prefix + 'WaterTemp').value || '',
         grinder: document.getElementById(prefix + 'Grinder').value || '',
         brewTime: brewTimeRaw,
-        isFavRecipe: document.getElementById(prefix + 'FavRecipe').checked,
+        isFavCoffee: document.getElementById(prefix + 'FavCoffee').checked,
         userContext: currentUser
       };
 
@@ -613,6 +1005,8 @@
     function routeToCoffeeHubPage(coffeeName) {
       document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
       switchActiveScreenViewState('viewCoffeeDetails');
+      activeCompareVariable = null;
+      updateCompareButtonStates();
 
       google.script.run.withSuccessHandler(function(res) {
         document.getElementById('hubCoffeeTitle').innerText = res.name;
@@ -634,57 +1028,146 @@
           if (item.duration && item.duration !== '--') metaParts.push(item.duration);
           let metaLine = metaParts.length ? `<div class="text-[10px] text-slate-500 font-medium">${metaParts.join(' • ')}</div>` : '';
 
+          let doseYieldStr = item.dose ? `${item.dose}g → ${item.yieldAmt}g` : `${item.yieldAmt}g`;
+
           div.innerHTML = `
             <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
               <span>${item.date}</span>
               <span class="text-orange font-black">${item.score} ★</span>
             </div>
-            <div class="text-slate-700 font-extrabold text-[11px]">${item.method} — ${item.recipe} (${item.yieldAmt}g, ${item.grind})</div>
+            <div class="text-slate-700 font-extrabold text-[11px]">${item.method} — ${item.recipe} (${doseYieldStr}, ${item.grind})</div>
             ${metaLine}
             ${item.notes ? `<p class="text-[11px] font-medium text-slate-500 m-0 leading-normal italic bg-white p-2 rounded-lg border border-slate-100 mt-1">"${item.notes}"</p>` : ''}
           `;
           ledger.appendChild(div);
         });
 
-        const ctx = document.getElementById('chartHubVariabilityLine').getContext('2d');
-        if (coffeeHubLineChartInstance) coffeeHubLineChartInstance.destroy();
-        coffeeHubLineChartInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: res.timelineLabels.length ? res.timelineLabels : ['No Runs'],
-            datasets: [{
-              data: res.timelineSeconds.length ? res.timelineSeconds : [150],
-              borderColor: '#E45B13',
-              backgroundColor: 'rgba(228, 91, 19, 0.03)',
-              borderWidth: 2.5,
-              tension: 0.35,
-              pointRadius: 4,
-              pointBackgroundColor: '#E45B13',
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false }, ticks: { font: { size: 8, weight: '700' }, color: '#94A3B8' } },
-              y: {
-                grid: { color: '#E2E8F0' },
-                ticks: {
-                  font: { size: 8, weight: '600' }, color: '#94A3B8',
-                  callback: function(value) {
-                    let mins = Math.floor(value / 60);
-                    let secs = value % 60;
-                    return mins + ":" + (secs < 10 ? '0' : '') + secs;
-                  }
-                }
-              }
-            }
-          }
-        });
+        lastHubResponseData = res;
+        renderHubVariabilityChart(res);
 
         document.getElementById('globalAppLoaderScreen').classList.add('hidden');
       }).getCoffeeHubData(coffeeName, currentUser);
+    }
+
+    // ─── BREW HISTORY ────────────────────────────────────────────────────────
+    function routeToBrewHistory() {
+      document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
+      switchActiveScreenViewState('viewBrewHistory');
+
+      google.script.run.withSuccessHandler(function(entries) {
+        brewHistoryCache = entries || [];
+
+        const processingSel = document.getElementById('bhFilterProcessing');
+        const methodSel = document.getElementById('bhFilterMethod');
+        processingSel.innerHTML = "<option value='All'>All Processing Methods</option>";
+        methodSel.innerHTML = "<option value='All'>All Brew Methods</option>";
+        [...new Set(brewHistoryCache.map(e => e.processing).filter(Boolean))].forEach(p => {
+          let o = document.createElement('option'); o.value = p; o.innerText = p; processingSel.appendChild(o);
+        });
+        [...new Set(brewHistoryCache.map(e => e.method).filter(Boolean))].forEach(m => {
+          let o = document.createElement('option'); o.value = m; o.innerText = m; methodSel.appendChild(o);
+        });
+        document.getElementById('bhFilterScore').value = '0';
+        document.getElementById('bhFilterDate').value = 'All';
+
+        renderBrewHistoryEntries(brewHistoryCache);
+        document.getElementById('globalAppLoaderScreen').classList.add('hidden');
+      }).getBrewHistory(currentUser);
+    }
+
+    function applyBrewHistoryFilters() {
+      const processing = document.getElementById('bhFilterProcessing').value;
+      const method = document.getElementById('bhFilterMethod').value;
+      const minScore = parseFloat(document.getElementById('bhFilterScore').value) || 0;
+      const dateRange = document.getElementById('bhFilterDate').value;
+
+      const rangeMsByOption = { '7': 7 * 86400000, '30': 30 * 86400000, '90': 90 * 86400000 };
+      const rangeMs = rangeMsByOption[dateRange];
+      const now = Date.now();
+
+      const filtered = brewHistoryCache.filter(entry => {
+        if (processing !== 'All' && entry.processing !== processing) return false;
+        if (method !== 'All' && entry.method !== method) return false;
+        if (entry.score < minScore) return false;
+        if (rangeMs && (now - entry.timestamp) > rangeMs) return false;
+        return true;
+      });
+
+      renderBrewHistoryEntries(filtered);
+    }
+
+    function renderBrewHistoryEntries(entries) {
+      const box = document.getElementById('boxBrewHistoryLedger');
+      box.innerHTML = entries.length ? "" : "<p class='text-slate-400 font-normal italic text-xs text-center py-6 m-0'>No brews match these filters.</p>";
+
+      entries.forEach(item => {
+        let div = document.createElement('div');
+        div.className = "p-3 bg-white border border-slate-200/60 rounded-2xl text-xs space-y-1 cursor-pointer tap-target-fix active:bg-slate-50 transition-colors";
+        div.onclick = () => routeToCoffeeHubPage(item.coffee);
+
+        let metaParts = [];
+        if (item.processing) metaParts.push(item.processing);
+        if (item.duration && item.duration !== '--') metaParts.push(item.duration);
+        if (item.waterTemp) metaParts.push(`${item.waterTemp}°C`);
+        let metaLine = metaParts.length ? `<div class="text-[10px] text-slate-500 font-medium">${metaParts.join(' • ')}</div>` : '';
+
+        div.innerHTML = `
+          <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <span>${item.date}</span>
+            <span class="text-orange font-black">${item.score.toFixed(1)} ★</span>
+          </div>
+          <div class="text-slate-800 font-extrabold text-[12px]">${item.coffee}</div>
+          <div class="text-slate-700 font-bold text-[11px]">${item.method} — ${item.recipe}</div>
+          ${metaLine}
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    // ─── PROFILE ─────────────────────────────────────────────────────────────
+    function routeToProfile() {
+      switchActiveScreenViewState('viewProfile');
+      document.getElementById('pfName').value = currentUser || '';
+      document.getElementById('pfEmail').value = currentUserEmail || '';
+      document.getElementById('pfCurrentPassword').value = '';
+      document.getElementById('pfNewPassword').value = '';
+      document.getElementById('pfErrorMsg').classList.add('hidden');
+    }
+
+    function handleProfileUpdateSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnProfileSaveSpinner');
+      const errBox = document.getElementById('pfErrorMsg');
+      errBox.classList.add('hidden');
+
+      const payload = {
+        currentEmail: currentUserEmail,
+        name: document.getElementById('pfName').value.trim(),
+        email: document.getElementById('pfEmail').value.trim(),
+        currentPassword: document.getElementById('pfCurrentPassword').value,
+        newPassword: document.getElementById('pfNewPassword').value
+      };
+
+      btn.disabled = true;
+      btn.innerText = "Saving...";
+
+      google.script.run.withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.innerText = "Save Changes";
+        if (!res.success) {
+          errBox.innerText = res.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+        currentUser = res.name;
+        currentUserEmail = res.email;
+        document.getElementById('dashUserBadge').innerText = currentUser;
+        document.getElementById('dashGreetingHeader').innerText = `Welcome, ${currentUser}. Let's brew some coffee!`;
+        document.getElementById('pfCurrentPassword').value = '';
+        document.getElementById('pfNewPassword').value = '';
+        saveSession(currentUser, currentUserEmail);
+        returnToDashboard();
+      }).updateUserProfile(payload);
     }
 
     // ─── RECIPE PAGE ─────────────────────────────────────────────────────────
@@ -693,7 +1176,7 @@
       isEditingRecipeState = false;
       document.getElementById('recipeModeRead').classList.remove('hidden');
       document.getElementById('recipeModeWrite').classList.add('hidden');
-      document.getElementById('btnRecipeEditToggle').innerText = "Modify Config";
+      document.getElementById('btnRecipeEditToggle').innerText = "Update Recipe";
       document.getElementById('lblReadRecipeTitle').innerText = recipeName;
       document.getElementById('txtWriteRecipeName').value = recipeName;
 
@@ -710,6 +1193,12 @@
       google.script.run.withSuccessHandler(function(profile) {
         document.getElementById('txtWriteInstructionsMarkdown').value = profile.instructions;
         renderParsedMarkdownHTMLEngine(profile.instructions);
+        renderOverviewCard(profile.overview);
+        document.getElementById('txtOverviewDose').value = (profile.overview && profile.overview.dose) || '';
+        document.getElementById('txtOverviewYield').value = (profile.overview && profile.overview.yield) || '';
+        document.getElementById('txtOverviewWaterTemp').value = (profile.overview && profile.overview.waterTemp) || '';
+        document.getElementById('txtOverviewBrewTime').value = (profile.overview && profile.overview.brewTime) || '';
+        document.getElementById('txtOverviewRatio').value = (profile.overview && profile.overview.ratio) || '';
       }).getRecipeDetails(recipeName);
     }
 
@@ -722,8 +1211,9 @@
       } else {
         document.getElementById('recipeModeRead').classList.remove('hidden');
         document.getElementById('recipeModeWrite').classList.add('hidden');
-        document.getElementById('btnRecipeEditToggle').innerText = "Modify Config";
+        document.getElementById('btnRecipeEditToggle').innerText = "Update Recipe";
         renderParsedMarkdownHTMLEngine(document.getElementById('txtWriteInstructionsMarkdown').value);
+        renderOverviewCard(readOverviewInputsAsObject());
       }
     }
 
@@ -733,10 +1223,60 @@
       document.getElementById('txtWriteRecipeName').value = "";
     }
 
+    // ─── RECIPE OVERVIEW ─────────────────────────────────────────────────────
+    const OVERVIEW_FIELD_LABELS = { dose: 'Dose', yield: 'Yield', waterTemp: 'Water Temp', brewTime: 'Brew Time', ratio: 'Ratio' };
+    const OVERVIEW_ICON_COLLECTION = {
+      dose: `<svg viewBox="0 0 24 24" class="w-4 h-4 stroke-current fill-none mx-auto" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 00-5 5c0 3 2 4 2 7a3 3 0 006 0c0-3 2-4 2-7a5 5 0 00-5-5z"/></svg>`,
+      yield: `<svg viewBox="0 0 24 24" class="w-4 h-4 stroke-current fill-none mx-auto" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16l-1.5 11a2 2 0 01-2 1.8H7.5a2 2 0 01-2-1.8L4 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>`,
+      waterTemp: `<svg viewBox="0 0 24 24" class="w-4 h-4 stroke-current fill-none mx-auto" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10.5a3.5 3.5 0 11-2 0V3z"/></svg>`,
+      brewTime: `<svg viewBox="0 0 24 24" class="w-4 h-4 stroke-current fill-none mx-auto" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>`,
+      ratio: `<svg viewBox="0 0 24 24" class="w-4 h-4 stroke-current fill-none mx-auto" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16M4 8l3-4M4 8l3 4M20 16H4M20 16l-3-4M20 16l-3 4"/></svg>`
+    };
+
+    function readOverviewInputsAsObject() {
+      return {
+        dose: document.getElementById('txtOverviewDose').value.trim(),
+        yield: document.getElementById('txtOverviewYield').value.trim(),
+        waterTemp: document.getElementById('txtOverviewWaterTemp').value.trim(),
+        brewTime: document.getElementById('txtOverviewBrewTime').value.trim(),
+        ratio: document.getElementById('txtOverviewRatio').value.trim()
+      };
+    }
+
+    function buildOverviewString() {
+      const overview = readOverviewInputsAsObject();
+      return Object.keys(OVERVIEW_FIELD_LABELS)
+        .filter(key => overview[key])
+        .map(key => `${OVERVIEW_FIELD_LABELS[key]}: ${overview[key]}`)
+        .join(' | ');
+    }
+
+    function renderOverviewCard(overview) {
+      const card = document.getElementById('recipeOverviewCard');
+      const grid = document.getElementById('recipeOverviewGrid');
+      grid.innerHTML = "";
+
+      const fields = Object.keys(OVERVIEW_FIELD_LABELS).filter(key => overview && overview[key]);
+      if (!fields.length) { card.classList.add('hidden'); return; }
+
+      fields.forEach(key => {
+        let div = document.createElement('div');
+        div.className = "bg-[#EEF6F1] rounded-2xl p-2.5 text-center flex flex-col items-center gap-1 flex-1 basis-[28%]";
+        div.innerHTML = `
+          <div class="text-orange">${OVERVIEW_ICON_COLLECTION[key]}</div>
+          <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">${OVERVIEW_FIELD_LABELS[key]}</span>
+          <span class="text-[11px] font-black text-slate-800">${overview[key]}</span>
+        `;
+        grid.appendChild(div);
+      });
+
+      card.classList.remove('hidden');
+    }
+
     function renderParsedMarkdownHTMLEngine(markdownRawText) {
       const container = document.getElementById('containerParsedMarkdownOutput');
       if (!markdownRawText || markdownRawText.trim() === "") {
-        container.innerHTML = "<p class='italic text-slate-400 font-medium m-0'>No custom instructions created yet. Tap Modify Config above to add steps.</p>";
+        container.innerHTML = "<p class='italic text-slate-400 font-medium m-0'>No custom instructions created yet. Tap Update Recipe above to add steps.</p>";
         return;
       }
       const structuralLinesArray = markdownRawText.split('\n');
@@ -756,6 +1296,7 @@
     function commitRecipeChangeToServer() {
       const rName = document.getElementById('txtWriteRecipeName').value.trim();
       const rMarkdown = document.getElementById('txtWriteInstructionsMarkdown').value;
+      const rOverview = buildOverviewString();
       if (!rName) { alert("Please enter a recipe name."); return; }
       const btn = document.getElementById('btnSaveRecipeSpinner');
       btn.disabled = true;
@@ -767,8 +1308,16 @@
           globalDatabaseCachedStore = updatedData;
           routeToRecipePage(rName);
         }).getDashboardData(currentUser);
-      }).commitRecipeCard(rName, rMarkdown);
+      }).commitRecipeCard(rName, rMarkdown, rOverview);
     }
+
+    // ─── AUTO LOGIN ──────────────────────────────────────────────────────────
+    (function attemptAutoLogin() {
+      const session = loadSession();
+      if (session && session.name && session.email) {
+        applyLoggedInSession(session.name, session.email);
+      }
+    })();
   </script>
 </body>
 </html>
