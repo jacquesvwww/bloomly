@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'DM Sans', sans-serif; background-color: #EEF6F1; color: #2C3E35; -webkit-font-smoothing: antialiased; }
     .btn-accent { background-color: #EA6227; color: #FFFFFF; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -524,6 +525,15 @@
   </div>
 
   <script>
+    // ─── SUPABASE CLIENT ───────────────────────────────────────────────────
+    // Replace these two values with your own project's URL and publishable key
+    // (Project Settings → API Keys in the Supabase dashboard). The publishable
+    // key is safe to keep here — Row Level Security is what actually protects
+    // the data, not secrecy of this key.
+    const SUPABASE_URL = 'https://yrrobxadzshlejaxbjzd.supabase.co/rest/v1/';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_42xcGobjA5n-5H0PECX_Lg_N_kwLGY3';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
     let globalDatabaseCachedStore = null;
     let dashboardBarChartInstance = null;
     let coffeeHubLineChartInstance = null;
@@ -544,18 +554,20 @@
     };
 
     // ─── LOGIN / REGISTER / SESSION ──────────────────────────────────────────
-    const SESSION_STORAGE_KEY = 'bloomlySession';
+    // Supabase's client library persists the session in localStorage itself
+    // and keeps it fresh (refreshing tokens automatically), so we no longer
+    // hand-roll our own session storage — we just ask Supabase what the
+    // current session is, and react to auth.onAuthStateChange when it changes.
 
-    function saveSession(name, email) {
-      try { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ name, email })); } catch (e) {}
-    }
+    async function loadUserProfileAndEnter(session) {
+      const { data: profile, error } = await supabaseClient
+        .from('profiles')
+        .select('name')
+        .eq('id', session.user.id)
+        .single();
 
-    function loadSession() {
-      try { return JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || 'null'); } catch (e) { return null; }
-    }
-
-    function clearSession() {
-      try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) {}
+      const displayName = (!error && profile && profile.name) ? profile.name : session.user.email;
+      applyLoggedInSession(displayName, session.user.email);
     }
 
     function applyLoggedInSession(name, email) {
@@ -563,63 +575,79 @@
       currentUserEmail = email;
       document.getElementById('dashUserBadge').innerText = name;
       document.getElementById('dashGreetingHeader').innerText = `Welcome, ${name}. Let's brew some coffee!`;
-      saveSession(name, email);
       synchronizeApplicationCoreEngine(true);
     }
 
-    function handleLoginSubmit(e) {
+    async function handleLoginSubmit(e) {
       e.preventDefault();
       const btn = document.getElementById('btnLoginSpinner');
       const errBox = document.getElementById('loginErrorMsg');
       errBox.classList.add('hidden');
 
-      const payload = {
-        email: document.getElementById('loginEmail').value.trim(),
-        password: document.getElementById('loginPassword').value
-      };
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
 
       btn.disabled = true;
       btn.innerText = "Logging in...";
 
-      google.script.run.withSuccessHandler(function(res) {
-        btn.disabled = false;
-        btn.innerText = "Log in";
-        if (!res.success) {
-          errBox.innerText = res.message;
-          errBox.classList.remove('hidden');
-          return;
-        }
-        document.getElementById('formLogin').reset();
-        applyLoggedInSession(res.name, res.email);
-      }).loginUser(payload);
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      btn.disabled = false;
+      btn.innerText = "Log in";
+
+      if (error) {
+        errBox.innerText = error.message;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('formLogin').reset();
+      await loadUserProfileAndEnter(data.session);
     }
 
-    function handleRegisterSubmit(e) {
+    async function handleRegisterSubmit(e) {
       e.preventDefault();
       const btn = document.getElementById('btnRegisterSpinner');
       const errBox = document.getElementById('registerErrorMsg');
       errBox.classList.add('hidden');
+      errBox.classList.remove('text-green-600', 'bg-green-50', 'border-green-100/80');
+      errBox.classList.add('text-red-500', 'bg-red-50', 'border-red-100/80');
 
-      const payload = {
-        name: document.getElementById('registerName').value.trim(),
-        email: document.getElementById('registerEmail').value.trim(),
-        password: document.getElementById('registerPassword').value
-      };
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
 
       btn.disabled = true;
       btn.innerText = "Creating account...";
 
-      google.script.run.withSuccessHandler(function(res) {
-        btn.disabled = false;
-        btn.innerText = "Sign up";
-        if (!res.success) {
-          errBox.innerText = res.message;
-          errBox.classList.remove('hidden');
-          return;
-        }
-        document.getElementById('formRegister').reset();
-        applyLoggedInSession(res.name, res.email);
-      }).registerUser(payload);
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: { name: name } }
+      });
+
+      btn.disabled = false;
+      btn.innerText = "Sign up";
+
+      if (error) {
+        errBox.innerText = error.message;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('formRegister').reset();
+
+      if (data.session) {
+        // Email confirmation is off — the account is immediately active.
+        await loadUserProfileAndEnter(data.session);
+      } else {
+        // Email confirmation is required — there's no session yet.
+        errBox.classList.remove('text-red-500', 'bg-red-50', 'border-red-100/80');
+        errBox.classList.add('text-green-600', 'bg-green-50', 'border-green-100/80');
+        errBox.innerText = "Check your email to confirm your account, then log in.";
+        errBox.classList.remove('hidden');
+        switchAuthTab('login');
+      }
     }
 
     function switchAuthTab(tab) {
@@ -633,11 +661,11 @@
       document.getElementById('registerErrorMsg').classList.add('hidden');
     }
 
-    function logoutUser() {
+    async function logoutUser() {
       currentUser = null;
       currentUserEmail = null;
       globalDatabaseCachedStore = null;
-      clearSession();
+      await supabaseClient.auth.signOut();
       switchAuthTab('login');
       switchActiveScreenViewState('viewLogin');
     }
@@ -1312,12 +1340,25 @@
     }
 
     // ─── AUTO LOGIN ──────────────────────────────────────────────────────────
-    (function attemptAutoLogin() {
-      const session = loadSession();
-      if (session && session.name && session.email) {
-        applyLoggedInSession(session.name, session.email);
+    // On page load, ask Supabase if a valid session already exists (it
+    // persists sessions in localStorage itself and handles token refresh).
+    (async function attemptAutoLogin() {
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session) {
+        await loadUserProfileAndEnter(data.session);
       }
     })();
+
+    // Keep the app in sync if the session changes in another tab, or expires.
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' && currentUser) {
+        currentUser = null;
+        currentUserEmail = null;
+        globalDatabaseCachedStore = null;
+        switchAuthTab('login');
+        switchActiveScreenViewState('viewLogin');
+      }
+    });
   </script>
 </body>
 </html>
