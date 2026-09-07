@@ -110,10 +110,17 @@
 
   <!-- BOTTOM NAV -->
   <div id="bottomNavBar" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 shadow-[0_-2px_10px_rgba(44,62,53,0.05)] z-40">
-    <div class="max-w-md mx-auto grid grid-cols-3">
+    <div class="max-w-md mx-auto grid grid-cols-4">
       <button onclick="routeToBrewHistory()" id="navBtnHistory" class="flex flex-col items-center justify-center gap-1 py-2.5 tap-target-fix text-slate-400 transition-colors">
         <svg viewBox="0 0 24 24" class="w-5 h-5 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
         <span class="text-[9px] font-black uppercase tracking-wide">History</span>
+      </button>
+      <button onclick="routeToBrewAssist()" id="navBtnAssist" class="relative flex flex-col items-center justify-center gap-1 py-2 tap-target-fix text-slate-400 transition-colors">
+        <span id="navAssistBadge" class="absolute top-1 right-[calc(50%-22px)] bg-orange text-white text-[6px] font-black uppercase tracking-wider px-1 py-[1px] rounded-full">AI</span>
+        <div id="navAssistIconWrap" class="w-8 h-8 rounded-full bg-gradient-to-br from-[#EA6227] to-[#2A2A9A] flex items-center justify-center shadow-sm">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 stroke-white fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-wide">Assist</span>
       </button>
       <button onclick="returnToDashboard()" id="navBtnHome" class="flex flex-col items-center justify-center gap-1 py-2.5 tap-target-fix text-slate-400 transition-colors">
         <svg viewBox="0 0 24 24" class="w-5 h-5 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
@@ -406,6 +413,50 @@
     <div id="boxBrewHistoryLedger" class="space-y-2.5"></div>
   </div>
 
+  <!-- BREW ASSIST -->
+  <div id="viewBrewAssist" class="hidden space-y-4">
+    <div class="text-center relative py-2 border-b border-slate-200/60">
+      <button onclick="returnToDashboard()" class="absolute left-0 top-3 text-slate-400 font-bold text-xs p-1 tap-target-fix">Back</button>
+      <div class="flex items-center justify-center gap-2">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#EA6227] to-[#2A2A9A] flex items-center justify-center flex-shrink-0">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 stroke-white fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h2 class="text-2xl font-black text-orange tracking-tight">Brew Assist</h2>
+      </div>
+      <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">AI-Powered Troubleshooting</span>
+    </div>
+
+    <!-- COFFEE PICKER -->
+    <div id="assistPickerScreen" class="space-y-3">
+      <div class="bg-gradient-to-br from-[#EA6227]/10 to-[#2A2A9A]/10 rounded-3xl p-4 border border-orange/20">
+        <p class="text-xs text-slate-600 font-medium leading-relaxed m-0">
+          Pick a coffee below and Brew Assist will look at every attempt you've logged — recipe, grind, timing, your notes — and help you figure out what to change next.
+        </p>
+      </div>
+      <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider px-1">Choose a coffee to troubleshoot</label>
+      <div id="assistCoffeeList" class="space-y-2"></div>
+    </div>
+
+    <!-- CHAT THREAD -->
+    <div id="assistChatScreen" class="hidden flex flex-col" style="min-height: 60vh;">
+      <div class="flex items-center justify-between mb-3">
+        <span id="assistChatCoffeeTitle" class="text-sm font-black text-slate-800 truncate"></span>
+        <button onclick="resetBrewAssist()" class="text-[10px] font-black text-slate-400 uppercase tracking-wider tap-target-fix flex-shrink-0 ml-2">Change Coffee</button>
+      </div>
+      <div id="assistChatMessages" class="flex-1 space-y-3 overflow-y-auto pb-3"></div>
+      <div id="assistLoadingRow" class="hidden flex items-center gap-2 text-slate-400 text-xs font-medium py-2">
+        <div class="w-3.5 h-3.5 border-2 border-orange/20 border-t-orange rounded-full animate-spin"></div>
+        Thinking...
+      </div>
+      <form onsubmit="handleAssistFollowUpSubmit(event)" class="flex items-center gap-2 pt-2 border-t border-slate-200/60">
+        <input type="text" id="assistFollowUpInput" placeholder="Ask a follow-up question..." class="flex-1 p-3 bg-slate-50 border border-slate-200/80 rounded-full text-sm focus:outline-none focus:border-orange">
+        <button type="submit" id="assistFollowUpSubmitBtn" class="w-11 h-11 flex-shrink-0 rounded-full btn-accent flex items-center justify-center tap-target-fix">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 stroke-white fill-none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- PROFILE -->
   <div id="viewProfile" class="hidden space-y-4">
     <div class="text-center relative py-2 border-b border-slate-200/60">
@@ -555,8 +606,8 @@
     // (Project Settings → API Keys in the Supabase dashboard). The publishable
     // key is safe to keep here — Row Level Security is what actually protects
     // the data, not secrecy of this key.
-    const SUPABASE_URL = 'https://yrrobxadzshlejaxbjzd.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_42xcGobjA5n-5H0PECX_Lg_N_kwLGY3';
+    const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XXXXXXXXXXXXXXXXXXXX';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     let globalDatabaseCachedStore = null;
@@ -699,7 +750,7 @@
 
     // ─── ROUTING ─────────────────────────────────────────────────────────────
     function switchActiveScreenViewState(targetViewId) {
-      ['viewLogin','viewDashboard','viewLogNew','viewLogExisting','viewCoffeeDetails','viewRecipePage','viewBrewHistory','viewProfile'].forEach(id => {
+      ['viewLogin','viewDashboard','viewLogNew','viewLogExisting','viewCoffeeDetails','viewRecipePage','viewBrewHistory','viewProfile','viewBrewAssist'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
       document.getElementById(targetViewId).classList.remove('hidden');
@@ -715,8 +766,8 @@
     }
 
     function updateNavActiveState(targetViewId) {
-      const tabsByView = { viewBrewHistory: 'navBtnHistory', viewDashboard: 'navBtnHome', viewProfile: 'navBtnProfile' };
-      ['navBtnHistory', 'navBtnHome', 'navBtnProfile'].forEach(id => {
+      const tabsByView = { viewBrewHistory: 'navBtnHistory', viewDashboard: 'navBtnHome', viewProfile: 'navBtnProfile', viewBrewAssist: 'navBtnAssist' };
+      ['navBtnHistory', 'navBtnHome', 'navBtnProfile', 'navBtnAssist'].forEach(id => {
         const btn = document.getElementById(id);
         btn.classList.remove('text-orange');
         btn.classList.add('text-slate-400');
@@ -1435,6 +1486,139 @@
       });
     }
 
+    // ─── BREW ASSIST ─────────────────────────────────────────────────────────
+    let assistSelectedCoffee = null;
+    let assistConversationHistory = []; // [{role: 'user'|'assistant', content: '...'}]
+
+    function routeToBrewAssist() {
+      switchActiveScreenViewState('viewBrewAssist');
+      resetBrewAssist();
+
+      const coffees = (globalDatabaseCachedStore && globalDatabaseCachedStore.allUniqueCoffees) || [];
+      const listBox = document.getElementById('assistCoffeeList');
+      listBox.innerHTML = coffees.length
+        ? ""
+        : "<p class='text-slate-400 font-normal italic text-xs text-center py-6 m-0'>Log a brew first, then come back here to troubleshoot it.</p>";
+
+      coffees.forEach(coffee => {
+        let row = document.createElement('div');
+        row.className = "bg-white border border-slate-200/70 rounded-2xl px-4 py-3.5 flex items-center justify-between cursor-pointer tap-target-fix active:bg-slate-50 transition-colors";
+        row.innerHTML = `
+          <span class="font-bold text-sm text-slate-700">${coffee.name}</span>
+          <svg viewBox="0 0 24 24" class="w-4 h-4 stroke-slate-300 fill-none flex-shrink-0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        `;
+        row.onclick = () => selectCoffeeForAssist(coffee.name);
+        listBox.appendChild(row);
+      });
+    }
+
+    function resetBrewAssist() {
+      assistSelectedCoffee = null;
+      assistConversationHistory = [];
+      document.getElementById('assistPickerScreen').classList.remove('hidden');
+      document.getElementById('assistChatScreen').classList.add('hidden');
+      document.getElementById('assistChatMessages').innerHTML = '';
+      document.getElementById('assistFollowUpInput').value = '';
+    }
+
+    async function selectCoffeeForAssist(coffeeName) {
+      assistSelectedCoffee = coffeeName;
+      document.getElementById('assistPickerScreen').classList.add('hidden');
+      document.getElementById('assistChatScreen').classList.remove('hidden');
+      document.getElementById('assistChatCoffeeTitle').innerText = coffeeName;
+      document.getElementById('assistChatMessages').innerHTML = '';
+      assistConversationHistory = [];
+
+      showAssistLoading(true);
+      const hubData = await fetchCoffeeHubData(coffeeName);
+      const result = await callBrewAssistAPI({ coffeeName, brews: hubData.logEntries });
+      showAssistLoading(false);
+
+      if (result.error) {
+        renderAssistMessage('assistant', `Sorry — ${result.error}`);
+        return;
+      }
+      assistConversationHistory.push({ role: 'user', content: `[Analyzing brew history for ${coffeeName}]` });
+      assistConversationHistory.push({ role: 'assistant', content: result.reply });
+      renderAssistMessage('assistant', result.reply);
+    }
+
+    async function handleAssistFollowUpSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('assistFollowUpInput');
+      const question = input.value.trim();
+      if (!question || !assistSelectedCoffee) return;
+
+      input.value = '';
+      renderAssistMessage('user', question);
+      showAssistLoading(true);
+
+      const result = await callBrewAssistAPI({
+        coffeeName: assistSelectedCoffee,
+        brews: [],
+        question: question,
+        conversationHistory: assistConversationHistory
+      });
+
+      showAssistLoading(false);
+
+      if (result.error) {
+        renderAssistMessage('assistant', `Sorry — ${result.error}`);
+        return;
+      }
+      assistConversationHistory.push({ role: 'user', content: question });
+      assistConversationHistory.push({ role: 'assistant', content: result.reply });
+      renderAssistMessage('assistant', result.reply);
+    }
+
+    async function callBrewAssistAPI(payload) {
+      try {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const token = sessionData.session ? sessionData.session.access_token : null;
+        if (!token) return { error: 'Your session expired — please log in again.' };
+
+        const response = await fetch('/api/brew-assist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await response.json();
+        if (!response.ok) return { error: json.error || 'Something went wrong.' };
+        return { reply: json.reply };
+      } catch (err) {
+        console.error('Brew Assist request failed:', err);
+        return { error: 'Could not reach Brew Assist. Check your connection and try again.' };
+      }
+    }
+
+    function showAssistLoading(isLoading) {
+      document.getElementById('assistLoadingRow').classList.toggle('hidden', !isLoading);
+      document.getElementById('assistFollowUpSubmitBtn').disabled = isLoading;
+      if (isLoading) {
+        document.getElementById('assistChatMessages').scrollTop = document.getElementById('assistChatMessages').scrollHeight;
+      }
+    }
+
+    function renderAssistMessage(role, text) {
+      const box = document.getElementById('assistChatMessages');
+      let wrapper = document.createElement('div');
+      wrapper.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+
+      let bubble = document.createElement('div');
+      bubble.className = role === 'user'
+        ? 'max-w-[85%] bg-[#2A2A9A] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-xs font-medium leading-relaxed'
+        : 'max-w-[85%] bg-white border border-slate-200/70 rounded-2xl rounded-tl-sm px-4 py-2.5 text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-line';
+      bubble.innerText = text;
+
+      wrapper.appendChild(bubble);
+      box.appendChild(wrapper);
+      box.scrollTop = box.scrollHeight;
+    }
+
     // ─── PROFILE ─────────────────────────────────────────────────────────────
     function routeToProfile() {
       switchActiveScreenViewState('viewProfile');
@@ -1724,6 +1908,13 @@
       const { data } = await supabaseClient.auth.getSession();
       if (data.session) {
         await loadUserProfileAndEnter(data.session);
+      } else {
+        // Coming from the landing page's "Sign Up" button? Land directly on
+        // the Sign Up form instead of Log In.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'signup') {
+          switchAuthTab('register');
+        }
       }
     })();
 
