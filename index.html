@@ -7,8 +7,15 @@
        actually respond to the real screen size. Apps Script used to inject
        this automatically via addMetaTag(); now that we serve a plain static
        file, it has to be explicit. viewport-fit=cover lets us handle the
-       iPhone notch/home-indicator safe areas properly further down. -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+       iPhone notch/home-indicator safe areas properly further down.
+       maximum-scale=1 stops iOS Safari's auto-zoom-on-focus for inputs
+       under 16px (this app has several, by design, to match Figma's spec
+       sizes) — without it, focusing one snaps the whole page to a zoomed-in
+       scale that then persists across view switches since this is a
+       single-page app with no real navigation to reset it on. iOS still
+       allows manual pinch-zoom via its own accessibility override even with
+       user-scalable=no, so this only kills the unwanted automatic jump. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Bloomly Coffee Hub</title>
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -177,9 +184,8 @@
       </form>
 
       <p id="authToggleRow" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
-        <span id="forgotPasswordInline">
+        <span id="forgotPasswordInline" class="block mb-1">
           <button type="button" onclick="switchAuthTab('forgot')" class="underline tap-target-fix">Forgot password?</button>
-          &nbsp;&middot;&nbsp;
         </span>
         or <button type="button" id="authToggleLink" onclick="switchAuthTab('register')" class="underline tap-target-fix">Sign up</button>
       </p>
