@@ -135,6 +135,31 @@
           <input type="password" id="loginPassword" required placeholder="Enter your password here" class="w-full py-2.5 px-4 bg-white rounded-lg text-sm font-bold text-center shadow-sm focus:outline-none">
         </div>
         <button type="submit" id="btnLoginSpinner" class="w-full btn-accent font-bold text-xs py-2.5 rounded-full mt-2 shadow-sm cursor-pointer tracking-wide">Log in</button>
+        <p id="forgotPasswordLink" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider">
+          <button type="button" onclick="switchAuthTab('forgot')" class="underline tap-target-fix">Forgot password?</button>
+        </p>
+      </form>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <form id="formForgotPassword" onsubmit="handleForgotPasswordSubmit(event)" class="hidden w-full space-y-4 text-sm">
+        <p id="forgotErrorMsg" class="hidden w-full text-center text-sm text-red-500 font-bold bg-red-50 border border-red-100/80 rounded-2xl px-4 py-3.5"></p>
+        <p class="text-center text-[11px] font-bold text-white/90 leading-relaxed px-2">Enter your email and we'll send you a link to reset your password.</p>
+        <div>
+          <label class="block text-center text-[9px] font-bold text-white/90 uppercase tracking-wider mb-1.5">Email address</label>
+          <input type="email" id="forgotEmail" required placeholder="Enter your email address here" class="w-full py-2.5 px-4 bg-white rounded-lg text-sm font-bold text-center shadow-sm focus:outline-none">
+        </div>
+        <button type="submit" id="btnForgotSpinner" class="w-full btn-accent font-bold text-xs py-2.5 rounded-full mt-2 shadow-sm cursor-pointer tracking-wide">Send reset link</button>
+      </form>
+
+      <!-- SET NEW PASSWORD FORM (reached only via the emailed recovery link) -->
+      <form id="formSetNewPassword" onsubmit="handleSetNewPasswordSubmit(event)" class="hidden w-full space-y-4 text-sm">
+        <p id="recoveryErrorMsg" class="hidden w-full text-center text-sm text-red-500 font-bold bg-red-50 border border-red-100/80 rounded-2xl px-4 py-3.5"></p>
+        <p class="text-center text-[11px] font-bold text-white/90 leading-relaxed px-2">Choose a new password for your account.</p>
+        <div>
+          <label class="block text-center text-[9px] font-bold text-white/90 uppercase tracking-wider mb-1.5">New password</label>
+          <input type="password" id="recoveryNewPassword" required placeholder="Enter a new password" class="w-full py-2.5 px-4 bg-white rounded-lg text-sm font-bold text-center shadow-sm focus:outline-none">
+        </div>
+        <button type="submit" id="btnSetNewPasswordSpinner" class="w-full btn-accent font-bold text-xs py-2.5 rounded-full mt-2 shadow-sm cursor-pointer tracking-wide">Set new password</button>
       </form>
 
       <!-- REGISTER FORM -->
@@ -154,8 +179,11 @@
         <button type="submit" id="btnRegisterSpinner" class="w-full btn-accent font-bold text-xs py-2.5 rounded-full mt-2 shadow-sm cursor-pointer tracking-wide">Create account</button>
       </form>
 
-      <p class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
+      <p id="authToggleRow" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
         or <button type="button" id="authToggleLink" onclick="switchAuthTab('register')" class="underline tap-target-fix">Sign up</button>
+      </p>
+      <p id="authBackToLoginRow" class="hidden text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
+        <button type="button" onclick="switchAuthTab('login')" class="underline tap-target-fix">Back to log in</button>
       </p>
     </div>
   </div>
@@ -1147,14 +1175,104 @@
     }
 
     function switchAuthTab(tab) {
-      document.getElementById('authHeading').innerText = tab === 'login' ? 'Log in' : 'Sign up';
-      const toggleLink = document.getElementById('authToggleLink');
-      toggleLink.innerText = tab === 'login' ? 'Sign up' : 'Sign in';
-      toggleLink.setAttribute('onclick', tab === 'login' ? "switchAuthTab('register')" : "switchAuthTab('login')");
+      const headings = { login: 'Log in', register: 'Sign up', forgot: 'Reset password' };
+      document.getElementById('authHeading').innerText = headings[tab];
       document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
       document.getElementById('formRegister').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('formForgotPassword').classList.toggle('hidden', tab !== 'forgot');
+      document.getElementById('formSetNewPassword').classList.add('hidden');
+      document.getElementById('forgotPasswordLink').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('authToggleRow').classList.toggle('hidden', tab === 'forgot');
+      document.getElementById('authBackToLoginRow').classList.toggle('hidden', tab !== 'forgot');
+
+      if (tab !== 'forgot') {
+        const toggleLink = document.getElementById('authToggleLink');
+        toggleLink.innerText = tab === 'login' ? 'Sign up' : 'Sign in';
+        toggleLink.setAttribute('onclick', tab === 'login' ? "switchAuthTab('register')" : "switchAuthTab('login')");
+      }
+
       document.getElementById('loginErrorMsg').classList.add('hidden');
       document.getElementById('registerErrorMsg').classList.add('hidden');
+      document.getElementById('forgotErrorMsg').classList.add('hidden');
+    }
+
+    // Reached only via the emailed password-recovery link, never by a normal
+    // tab click — Supabase creates a real (temporary-intent) session for it,
+    // which must NOT be treated as an ordinary login (see attemptAutoLogin
+    // and the PASSWORD_RECOVERY case in onAuthStateChange below).
+    function showPasswordRecoveryScreen() {
+      switchActiveScreenViewState('viewLogin');
+      document.getElementById('authHeading').innerText = 'Set new password';
+      document.getElementById('formLogin').classList.add('hidden');
+      document.getElementById('formRegister').classList.add('hidden');
+      document.getElementById('formForgotPassword').classList.add('hidden');
+      document.getElementById('formSetNewPassword').classList.remove('hidden');
+      document.getElementById('forgotPasswordLink').classList.add('hidden');
+      document.getElementById('authToggleRow').classList.add('hidden');
+      document.getElementById('authBackToLoginRow').classList.add('hidden');
+    }
+
+    async function handleForgotPasswordSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const btn = document.getElementById('btnForgotSpinner');
+      const errBox = document.getElementById('forgotErrorMsg');
+      errBox.classList.add('hidden');
+      errBox.classList.remove('text-green-600', 'bg-green-50', 'border-green-100/80');
+      errBox.classList.add('text-red-500', 'bg-red-50', 'border-red-100/80');
+
+      btn.disabled = true;
+      btn.innerText = "Sending...";
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+
+      btn.disabled = false;
+      btn.innerText = "Send reset link";
+
+      if (error) {
+        errBox.innerText = error.message;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      errBox.classList.remove('text-red-500', 'bg-red-50', 'border-red-100/80');
+      errBox.classList.add('text-green-600', 'bg-green-50', 'border-green-100/80');
+      errBox.innerText = "Check your email for a link to reset your password.";
+      errBox.classList.remove('hidden');
+    }
+
+    async function handleSetNewPasswordSubmit(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById('recoveryNewPassword').value;
+      const btn = document.getElementById('btnSetNewPasswordSpinner');
+      const errBox = document.getElementById('recoveryErrorMsg');
+      errBox.classList.add('hidden');
+
+      btn.disabled = true;
+      btn.innerText = "Saving...";
+
+      const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+
+      btn.disabled = false;
+      btn.innerText = "Set new password";
+
+      if (error) {
+        errBox.innerText = error.message;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      // Don't leave the user sitting in the temporary recovery session —
+      // sign out and have them log back in fresh with the new password.
+      await supabaseClient.auth.signOut();
+      switchAuthTab('login');
+      const loginErrBox = document.getElementById('loginErrorMsg');
+      loginErrBox.classList.remove('text-red-500', 'bg-red-50', 'border-red-100/80');
+      loginErrBox.classList.add('text-green-600', 'bg-green-50', 'border-green-100/80');
+      loginErrBox.innerText = "Password updated. Please log in.";
+      loginErrBox.classList.remove('hidden');
     }
 
     async function logoutUser() {
@@ -2816,6 +2934,18 @@
     // On page load, ask Supabase if a valid session already exists (it
     // persists sessions in localStorage itself and handles token refresh).
     (async function attemptAutoLogin() {
+      // A password-reset email link lands here with "#...&type=recovery" in
+      // the URL. Supabase's client auto-detects that hash and creates a real
+      // session for it — checked synchronously, before any async session
+      // lookup, so it can never race with (and get overridden by) the normal
+      // auto-login branch below dropping the user straight onto the
+      // Dashboard. The PASSWORD_RECOVERY case in onAuthStateChange handles
+      // it too, as a backup.
+      if (window.location.hash.includes('type=recovery')) {
+        showPasswordRecoveryScreen();
+        return;
+      }
+
       const { data } = await supabaseClient.auth.getSession();
       if (data.session) {
         await loadUserProfileAndEnter(data.session);
@@ -2831,6 +2961,10 @@
 
     // Keep the app in sync if the session changes in another tab, or expires.
     supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        showPasswordRecoveryScreen();
+        return;
+      }
       if (event === 'SIGNED_OUT' && currentUser) {
         currentUser = null;
         currentUserEmail = null;
