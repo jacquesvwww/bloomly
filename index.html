@@ -135,9 +135,6 @@
           <input type="password" id="loginPassword" required placeholder="Enter your password here" class="w-full py-2.5 px-4 bg-white rounded-lg text-sm font-bold text-center shadow-sm focus:outline-none">
         </div>
         <button type="submit" id="btnLoginSpinner" class="w-full btn-accent font-bold text-xs py-2.5 rounded-full mt-2 shadow-sm cursor-pointer tracking-wide">Log in</button>
-        <p id="forgotPasswordLink" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider">
-          <button type="button" onclick="switchAuthTab('forgot')" class="underline tap-target-fix">Forgot password?</button>
-        </p>
       </form>
 
       <!-- FORGOT PASSWORD FORM -->
@@ -180,6 +177,10 @@
       </form>
 
       <p id="authToggleRow" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
+        <span id="forgotPasswordInline">
+          <button type="button" onclick="switchAuthTab('forgot')" class="underline tap-target-fix">Forgot password?</button>
+          &nbsp;&middot;&nbsp;
+        </span>
         or <button type="button" id="authToggleLink" onclick="switchAuthTab('register')" class="underline tap-target-fix">Sign up</button>
       </p>
       <p id="authBackToLoginRow" class="hidden text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
@@ -1181,7 +1182,7 @@
       document.getElementById('formRegister').classList.toggle('hidden', tab !== 'register');
       document.getElementById('formForgotPassword').classList.toggle('hidden', tab !== 'forgot');
       document.getElementById('formSetNewPassword').classList.add('hidden');
-      document.getElementById('forgotPasswordLink').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('forgotPasswordInline').classList.toggle('hidden', tab !== 'login');
       document.getElementById('authToggleRow').classList.toggle('hidden', tab === 'forgot');
       document.getElementById('authBackToLoginRow').classList.toggle('hidden', tab !== 'forgot');
 
@@ -1207,7 +1208,6 @@
       document.getElementById('formRegister').classList.add('hidden');
       document.getElementById('formForgotPassword').classList.add('hidden');
       document.getElementById('formSetNewPassword').classList.remove('hidden');
-      document.getElementById('forgotPasswordLink').classList.add('hidden');
       document.getElementById('authToggleRow').classList.add('hidden');
       document.getElementById('authBackToLoginRow').classList.add('hidden');
     }
