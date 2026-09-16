@@ -1,1 +1,1 @@
-anthropic
+google-genai==2.23.0
