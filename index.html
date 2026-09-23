@@ -263,40 +263,31 @@
       </div>
     </div>
 
-    <!-- Recipes + Add -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="card-shell p-4 flex flex-col justify-between space-y-3 min-h-[140px]">
-        <div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">My Saved Recipes</span>
-          <div id="boxSavedRecipesList" class="space-y-1.5 max-h-24 overflow-y-auto text-xs font-bold text-slate-700"></div>
-        </div>
-        <button onclick="triggerNewRecipeCreation()" class="text-[10px] font-extrabold text-orange uppercase tracking-wider text-left pt-1 block">View All Recipes</button>
-      </div>
-      <div onclick="triggerNewRecipeCreation()" class="bg-white p-4 rounded-3xl border-2 border-slate-200 border-dashed shadow-xs flex flex-col justify-center items-center text-center cursor-pointer tap-target-fix active:bg-slate-50 transition-colors min-h-[140px]">
-        <span class="text-orange font-black text-lg leading-none mb-1">+</span>
-        <span class="text-orange font-black text-sm block">Add a new recipe</span>
-        <span class="text-[9px] text-slate-400 mt-0.5 font-medium">Create clean custom steps</span>
-      </div>
+    <!-- Coffees Brewed This Week — one pill per day (Figma node 48:147):
+         purple = at least one brew logged that day, grey = none, white dot = today. -->
+    <div class="pt-4 space-y-4">
+      <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">Coffees brewed this week</h3>
+      <div id="boxWeeklyBrewDays" class="grid grid-cols-7"></div>
     </div>
 
-    <!-- Recently Brewed Coffees + Chart -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="card-shell p-4 flex flex-col justify-between min-h-[150px]">
-        <div>
-          <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">Recently Brewed Coffees</span>
-          <div id="boxRecentCoffeesList" class="space-y-2 text-xs font-bold text-slate-800 max-h-28 overflow-y-auto"></div>
-        </div>
-      </div>
-      <div class="card-shell p-3.5 flex flex-col justify-between min-h-[150px]">
-        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Most Popular Coffees</span>
-        <div class="w-full h-28 relative mt-2">
-          <canvas id="chartPopularityDashboard"></canvas>
-        </div>
+    <!-- Recently Brewed Coffees — full-width pill rows; orange is the pressed state -->
+    <div class="pt-4 space-y-4">
+      <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">Recently brewed coffees</h3>
+      <div id="boxRecentCoffeesList" class="space-y-2 px-2.5"></div>
+    </div>
+
+    <!-- My Saved Recipes — divided list with an open-arrow chip per row -->
+    <div class="pt-4 space-y-3">
+      <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">My saved recipes</h3>
+      <div id="boxSavedRecipesList" class="px-4"></div>
+      <div class="flex items-center justify-center gap-3 pt-1">
+        <button id="btnToggleAllRecipes" onclick="toggleAllSavedRecipes()" class="hidden btn-accent text-[9px] font-bold tracking-[0.3px] px-3 py-0.5 rounded-xl tap-target-fix">view all recipes</button>
+        <button onclick="triggerNewRecipeCreation()" class="text-[9px] font-bold text-orange tracking-[0.3px] underline tap-target-fix">add a new recipe</button>
       </div>
     </div>
 
     <!-- Recipe Library -->
-    <div class="space-y-2.5">
+    <div class="pt-4 space-y-2.5">
       <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Recipe Library</h3>
       <div id="boxBaseLibraryGrid" class="grid grid-cols-2 gap-2.5"></div>
     </div>
@@ -1057,7 +1048,6 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     let globalDatabaseCachedStore = null;
-    let dashboardBarChartInstance = null;
     let coffeeHubLineChartInstance = null;
     let isEditingRecipeState = false;
     let currentUser = null;
@@ -1380,7 +1370,6 @@
 
     function buildDashboardDataFromRows(brews, recipes, baseLibrary) {
       const methodFrequencyMap = {};
-      const coffeeFrequencyMap = {};
       const allUniqueCoffeesMap = {};
       const lastBrewedByCoffee = {};
       const lastUsedByGrinder = {};
@@ -1392,7 +1381,6 @@
         mostRecentCoffeeName = row.coffee_name || mostRecentCoffeeName;
 
         const coffeeName = row.coffee_name || "Unknown Coffee";
-        coffeeFrequencyMap[coffeeName] = (coffeeFrequencyMap[coffeeName] || 0) + 1;
 
         const method = row.brew_method || "Unknown Method";
         methodFrequencyMap[method] = (methodFrequencyMap[method] || 0) + 1;
@@ -1438,10 +1426,23 @@
         avgBrewTimeStr = formatSecondsToMS(avgSecs);
       }
 
-      const sortedCoffees = Object.keys(coffeeFrequencyMap).sort((a, b) => coffeeFrequencyMap[b] - coffeeFrequencyMap[a]);
       const recentlyBrewedCoffees = Object.keys(lastBrewedByCoffee)
         .sort((a, b) => lastBrewedByCoffee[b] - lastBrewedByCoffee[a])
         .slice(0, 6);
+      // Monday-to-Sunday of the current week in local time; each entry counts
+      // the brews logged on that day.
+      const weekStart = new Date();
+      weekStart.setHours(0, 0, 0, 0);
+      weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+      const weeklyBrewCounts = [0, 0, 0, 0, 0, 0, 0];
+      brews.forEach(row => {
+        const brewDay = new Date(row.brewed_at);
+        brewDay.setHours(0, 0, 0, 0);
+        // Rounding absorbs the ±1h shift when a daylight-saving change falls mid-week.
+        const dayIndex = Math.round((brewDay - weekStart) / 86400000);
+        if (dayIndex >= 0 && dayIndex < 7) weeklyBrewCounts[dayIndex]++;
+      });
+
       const knownGrinders = Object.keys(lastUsedByGrinder)
         .sort((a, b) => lastUsedByGrinder[b].ts - lastUsedByGrinder[a].ts)
         .map(k => lastUsedByGrinder[k].name);
@@ -1467,10 +1468,7 @@
         })),
         allUniqueCoffees: Object.values(allUniqueCoffeesMap),
         knownGrinders: knownGrinders,
-        recentCoffeesChartData: {
-          labels: sortedCoffees.slice(0, 3),
-          counts: sortedCoffees.slice(0, 3).map(c => coffeeFrequencyMap[c])
-        }
+        weeklyBrewCounts: weeklyBrewCounts
       };
     }
 
@@ -1491,25 +1489,35 @@
 
     // ─── DASHBOARD RENDER ────────────────────────────────────────────────────
     function renderDashboardListsAndCharts(data) {
-      const recBox = document.getElementById('boxSavedRecipesList');
-      recBox.innerHTML = data.savedRecipes.length ? "" : "<p class='text-slate-400 font-normal italic m-0'>No profiles added yet.</p>";
-      data.savedRecipes.forEach(r => {
-        let p = document.createElement('p');
-        p.className = "cursor-pointer tap-target-fix truncate hover:text-orange transition-colors py-0.5";
-        p.innerText = r;
-        p.onclick = () => routeToRecipePage(r);
-        recBox.appendChild(p);
-      });
+      showAllSavedRecipes = false;
+      renderSavedRecipesList();
 
       const recentBox = document.getElementById('boxRecentCoffeesList');
-      const recentCoffees = data.recentlyBrewedCoffees || [];
-      recentBox.innerHTML = recentCoffees.length ? "" : "<p class='text-slate-400 font-normal italic m-0'>Log brews to see them here.</p>";
+      const recentCoffees = (data.recentlyBrewedCoffees || []).slice(0, 3);
+      recentBox.innerHTML = recentCoffees.length ? "" : "<p class='text-center text-xs text-slate-400 font-normal italic m-0'>Log brews to see them here.</p>";
       recentCoffees.forEach(c => {
-        let p = document.createElement('p');
-        p.className = "cursor-pointer tap-target-fix truncate hover:text-orange transition-colors py-0.5";
-        p.innerText = c;
-        p.onclick = () => routeToCoffeeHubPage(c);
-        recentBox.appendChild(p);
+        let btn = document.createElement('button');
+        btn.className = "w-full h-[34px] px-4 bg-white border border-slate-200/60 shadow-xs rounded-2xl text-[12px] font-bold text-black tracking-[-0.3px] truncate tap-target-fix transition-colors active:bg-[#EA6227] active:text-white";
+        btn.innerText = c;
+        btn.onclick = () => routeToCoffeeHubPage(c);
+        recentBox.appendChild(btn);
+      });
+
+      const weekBox = document.getElementById('boxWeeklyBrewDays');
+      const todayIndex = (new Date().getDay() + 6) % 7;
+      weekBox.innerHTML = "";
+      ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'].forEach((day, i) => {
+        const count = data.weeklyBrewCounts[i];
+        let col = document.createElement('div');
+        col.className = "flex flex-col items-center gap-2";
+        col.title = `${count} brew${count === 1 ? '' : 's'}`;
+        col.innerHTML = `
+          <div class="relative w-8 h-[110px] rounded-full ${count ? 'bg-[#2A2A9A]' : 'bg-[#CAD5E2]'}">
+            ${i === todayIndex ? '<span class="absolute left-1/2 top-2.5 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white"></span>' : ''}
+          </div>
+          <span class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">${day}</span>
+        `;
+        weekBox.appendChild(col);
       });
 
       const libGrid = document.getElementById('boxBaseLibraryGrid');
@@ -1529,25 +1537,41 @@
         libGrid.appendChild(div);
       });
 
-      if (dashboardBarChartInstance) dashboardBarChartInstance.destroy();
-      const freshDashCanvas = resetCanvas('chartPopularityDashboard');
-      const ctx = freshDashCanvas.getContext('2d');
-      const safetyLabels = data.recentCoffeesChartData.labels.length ? data.recentCoffeesChartData.labels.map(l => l.substring(0, 8) + '..') : ['None'];
-      const safetyCounts = data.recentCoffeesChartData.counts.length ? data.recentCoffeesChartData.counts : [0];
-      dashboardBarChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: safetyLabels, datasets: [{ data: safetyCounts, backgroundColor: '#2A2A9A', borderRadius: 6, barThickness: 14 }] },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 8, weight: '700' }, color: '#64748B' } },
-            y: { grid: { display: false }, ticks: { display: false }, border: { display: false } }
-          }
-        }
+      switchActiveScreenViewState('viewDashboard');
+    }
+
+    // The dashboard shows the first three saved recipes; "view all recipes"
+    // expands the list in place (and collapses it again).
+    const SAVED_RECIPES_PREVIEW_COUNT = 3;
+    let showAllSavedRecipes = false;
+
+    function renderSavedRecipesList() {
+      const recipes = globalDatabaseCachedStore.savedRecipes || [];
+      const recBox = document.getElementById('boxSavedRecipesList');
+      recBox.innerHTML = recipes.length ? "" : "<p class='text-center text-xs text-slate-400 font-normal italic m-0'>No recipes saved yet.</p>";
+      const visible = showAllSavedRecipes ? recipes : recipes.slice(0, SAVED_RECIPES_PREVIEW_COUNT);
+      visible.forEach(r => {
+        let row = document.createElement('div');
+        row.className = "flex items-center gap-3 py-1.5 border-b border-slate-200 cursor-pointer tap-target-fix group";
+        row.onclick = () => routeToRecipePage(r);
+        row.innerHTML = `
+          <span class="flex-1 min-w-0 text-[14px] font-bold text-[#314158] truncate group-active:text-orange"></span>
+          <span class="flex-shrink-0 w-[22px] h-[21px] rounded-lg bg-slate-200/80 flex items-center justify-center text-[#1D293D]">
+            <svg viewBox="0 0 10 10" class="w-2 h-2 stroke-current fill-none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8L8 2M3.5 2H8v4.5"/></svg>
+          </span>
+        `;
+        row.firstElementChild.innerText = r;
+        recBox.appendChild(row);
       });
 
-      switchActiveScreenViewState('viewDashboard');
+      const toggleBtn = document.getElementById('btnToggleAllRecipes');
+      toggleBtn.classList.toggle('hidden', recipes.length <= SAVED_RECIPES_PREVIEW_COUNT);
+      toggleBtn.innerText = showAllSavedRecipes ? "show fewer" : "view all recipes";
+    }
+
+    function toggleAllSavedRecipes() {
+      showAllSavedRecipes = !showAllSavedRecipes;
+      renderSavedRecipesList();
     }
 
     // ─── CHART CANVAS RESET ──────────────────────────────────────────────────
