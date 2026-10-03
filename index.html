@@ -217,6 +217,17 @@
     </div>
   </div>
 
+  <!-- LOW-SCORE PROMPT — offered right after saving a brew scored 2/5 or lower -->
+  <div id="lowScoreAssistPrompt" class="hidden fixed inset-x-0 bottom-[72px] z-40 px-4">
+    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200/60 p-4 space-y-3">
+      <p id="lowScoreAssistText" class="text-xs font-bold text-slate-800 m-0"></p>
+      <div class="flex gap-2">
+        <button type="button" onclick="acceptLowScoreAssistPrompt()" class="flex-1 btn-accent font-black py-2.5 rounded-xl text-[10px] tracking-wider tap-target-fix">Get help</button>
+        <button type="button" onclick="dismissLowScoreAssistPrompt()" class="flex-1 bg-slate-100 text-slate-500 font-black py-2.5 rounded-xl text-[10px] tracking-wider tap-target-fix">Not now</button>
+      </div>
+    </div>
+  </div>
+
   <!-- GLOBAL LOADER -->
   <div id="globalAppLoaderScreen" class="fixed inset-0 bg-[#EEF6F1] z-50 flex flex-col justify-center items-center gap-3 hidden">
     <div class="w-10 h-10 border-4 border-[#2A2A9A]/10 border-t-[#EA6227] animate-spin rounded-full"></div>
@@ -233,8 +244,12 @@
       <h2 class="text-2xl font-black text-slate-800 tracking-tight leading-tight px-4" id="dashGreetingHeader">Welcome. Let's brew some coffee!</h2>
     </div>
 
+    <!-- This week — one circle per day (Figma "Homepage refactor 2", node 56:53):
+         purple with a tick = at least one brew logged that day, grey = none. -->
+    <div id="boxWeeklyBrewDays" class="flex justify-center gap-[19px] !mt-[23px]"></div>
+
     <!-- Action Buttons — uniform 3-column grid -->
-    <div class="grid grid-cols-3 gap-2.5">
+    <div class="grid grid-cols-3 gap-2.5 !mt-[24.5px]">
       <div onclick="routeToLogNew()" class="action-btn-primary tap-target-fix">
         <span class="text-[10px] font-black uppercase tracking-tight leading-tight">Quick Add</span>
       </div>
@@ -251,7 +266,10 @@
     <div class="grid grid-cols-3 gap-2.5">
       <div class="bg-white p-3.5 rounded-2xl text-center border border-slate-200/60 shadow-xs">
         <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Total Brews</span>
-        <span id="mCount" class="text-2xl font-black text-slate-800 block mt-0.5">--</span>
+        <span class="flex items-center justify-center gap-2.5 mt-0.5">
+          <span id="mCount" class="text-2xl font-black text-slate-800">--</span>
+          <img src="assets/fire.png" alt="" class="w-[19px] h-6 object-cover">
+        </span>
       </div>
       <div class="bg-white p-3.5 rounded-2xl text-center border border-slate-200/60 shadow-xs">
         <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Fav Method</span>
@@ -263,23 +281,36 @@
       </div>
     </div>
 
-    <!-- Coffees Brewed This Week — one pill per day (Figma node 48:147):
-         purple = at least one brew logged that day, grey = none, white dot = today. -->
-    <div class="pt-4 space-y-4">
-      <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">Coffees brewed this week</h3>
-      <div id="boxWeeklyBrewDays" class="grid grid-cols-7"></div>
+    <!-- Weekly digest — last week's report, shown once it's been written -->
+    <div id="weeklyDigestCard" class="hidden bg-white rounded-lg mx-[18px] p-4 space-y-2">
+      <h3 class="text-[11px] leading-[16.5px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">Your week in coffee</h3>
+      <p id="weeklyDigestHeadline" class="text-sm font-black text-slate-800 leading-snug m-0"></p>
+      <ul id="weeklyDigestHighlights" class="space-y-1 text-xs font-medium text-slate-600 list-disc pl-4 m-0"></ul>
+      <p class="text-xs font-medium text-slate-700 m-0"><span class="font-black text-[#EA6227]">Try this week:</span> <span id="weeklyDigestTry"></span></p>
     </div>
 
     <!-- Recently Brewed Coffees — full-width pill rows; orange is the pressed state -->
-    <div class="pt-4 space-y-4">
+    <div class="pt-2 space-y-4">
       <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">Recently brewed coffees</h3>
       <div id="boxRecentCoffeesList" class="space-y-2 px-2.5"></div>
+      <div class="flex justify-center">
+        <button id="btnToggleAllCoffees" onclick="toggleAllRecentCoffees()" class="hidden btn-accent w-[90px] h-[17px] text-[8px] leading-4 font-bold tracking-[0.3px] rounded-xl tap-target-fix">view all coffees</button>
+      </div>
     </div>
 
-    <!-- My Saved Recipes — divided list with an open-arrow chip per row -->
-    <div class="pt-4 space-y-3">
+    <!-- Most Popular Coffees — top six by brew count (Figma "Most popular coffees
+         chart", node 56:107): pill bars with the count inside, names underneath. -->
+    <div class="pt-4">
+      <div class="bg-white rounded-lg mx-[18px] pt-[13.25px] pb-[15px] pl-[17px]">
+        <h3 class="text-[11px] leading-[16.5px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">Most popular coffees</h3>
+        <div id="boxPopularCoffeesChart" class="grid grid-cols-6 items-end -ml-[17px] px-[30px] mt-[17px]"></div>
+      </div>
+    </div>
+
+    <!-- My Saved Recipes — white cards with an open-arrow chip per row -->
+    <div class="pt-4 space-y-4">
       <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">My saved recipes</h3>
-      <div id="boxSavedRecipesList" class="px-4"></div>
+      <div id="boxSavedRecipesList" class="space-y-1.5 px-3.5"></div>
       <div class="flex items-center justify-center gap-3 pt-1">
         <button id="btnToggleAllRecipes" onclick="toggleAllSavedRecipes()" class="hidden btn-accent text-[9px] font-bold tracking-[0.3px] px-3 py-0.5 rounded-xl tap-target-fix">view all recipes</button>
         <button onclick="triggerNewRecipeCreation()" class="text-[9px] font-bold text-orange tracking-[0.3px] underline tap-target-fix">add a new recipe</button>
@@ -829,7 +860,7 @@
       <div id="assistCoffeeList" class="space-y-2"></div>
     </div>
 
-    <!-- STEP 2 — pick a category -->
+    <!-- STEP 2 — how did it taste? (multi-select) -->
     <div id="assistStepCategory" class="hidden space-y-4">
       <div class="flex items-center justify-between">
         <button onclick="assistShowStep('assistStepPicker')" class="flex items-center gap-1 text-slate-500 font-bold text-xs p-1 tap-target-fix">
@@ -840,9 +871,10 @@
       </div>
       <div class="text-center space-y-2">
         <h1 id="assistCategoryHeading" class="text-2xl font-black text-slate-800 tracking-tight leading-tight px-2"></h1>
-        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">What did you not like about it?</span>
+        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block">How did your last cup taste? Pick all that apply</span>
       </div>
       <div id="assistCategoryList" class="space-y-2"></div>
+      <button type="button" id="btnAssistTastesNext" onclick="assistConfirmTastes()" disabled class="w-full btn-accent font-black py-3.5 rounded-xl text-xs tracking-wider cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
     </div>
 
     <!-- STEP 3 — optional extra context -->
@@ -867,6 +899,7 @@
           <span id="btnAssistSpinnerIcon" class="hidden w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
           <span id="btnAssistSubmitLabel">Get Suggestion</span>
         </button>
+        <span class="assist-remaining-label text-[9px] font-bold text-slate-400 block text-center"></span>
       </form>
     </div>
 
@@ -883,8 +916,42 @@
         <span class="text-sm font-black tracking-widest text-[#2A2A9A] uppercase block">Bloomly</span>
         <h1 class="text-2xl font-black text-slate-800 tracking-tight leading-tight px-4">Here's what Brew Assist thinks</h1>
       </div>
-      <div id="assistResultCard" class="hidden field-box p-4">
-        <p id="assistResultText" class="text-xs font-medium text-slate-700 leading-relaxed m-0 whitespace-pre-line"></p>
+      <div id="assistResultError" class="hidden field-box p-4">
+        <p id="assistResultErrorText" class="text-xs font-medium text-slate-700 leading-relaxed m-0"></p>
+      </div>
+      <div id="assistResultCard" class="hidden space-y-3">
+        <div class="field-box p-4">
+          <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">What's going on</span>
+          <p id="assistDiagnosis" class="text-xs font-medium text-slate-700 leading-relaxed m-0"></p>
+        </div>
+        <div id="assistChangeCard" class="hidden bg-[#2A2A9A] text-white rounded-2xl p-4 space-y-1">
+          <span class="text-[9px] font-black text-white/60 uppercase tracking-wider block">Try this next: <span id="assistChangeSetting"></span></span>
+          <p class="text-lg font-black leading-tight m-0"><span id="assistChangeFrom"></span> <span class="text-[#EA6227]">→</span> <span id="assistChangeTo"></span></p>
+        </div>
+        <div id="assistWhyCard" class="hidden field-box p-4 space-y-3">
+          <div>
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">Why</span>
+            <p id="assistWhy" class="text-xs font-medium text-slate-700 leading-relaxed m-0"></p>
+          </div>
+          <div id="assistIfNotBlock" class="hidden">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1">If that doesn't fix it</span>
+            <p id="assistIfNot" class="text-xs font-medium text-slate-700 leading-relaxed m-0"></p>
+          </div>
+        </div>
+        <button type="button" id="btnAssistUseSuggestion" onclick="assistUseSuggestion()" class="hidden w-full btn-accent font-black py-3.5 rounded-xl text-xs tracking-wider cursor-pointer shadow-sm">Use this for my next brew</button>
+
+        <!-- One follow-up question per suggestion -->
+        <form id="assistFollowUpForm" onsubmit="handleAssistFollowUp(event)" class="hidden space-y-2">
+          <div class="field-box p-1 flex items-center gap-1">
+            <input type="text" id="assistFollowUpInput" maxlength="200" placeholder="Ask one follow-up, e.g. what if my grinder can't go finer?" class="flex-1 min-w-0 h-9 px-2.5 text-xs font-bold focus:outline-none">
+            <button type="submit" id="btnAssistFollowUp" class="btn-accent text-[10px] font-black px-3 h-8 rounded-lg tracking-wider">Ask</button>
+          </div>
+          <span class="assist-remaining-label text-[9px] font-bold text-slate-400 block text-center"></span>
+        </form>
+        <div id="assistFollowUpAnswer" class="hidden field-box p-4 space-y-1">
+          <span id="assistFollowUpQuestion" class="text-[9px] font-black text-slate-400 uppercase tracking-wider block"></span>
+          <p id="assistFollowUpText" class="text-xs font-medium text-slate-700 leading-relaxed m-0 whitespace-pre-line"></p>
+        </div>
       </div>
       <button onclick="assistStartOver()" class="w-full bg-white text-slate-500 font-black py-3 rounded-xl text-xs tracking-wide tap-target-fix shadow-xs">Troubleshoot another coffee</button>
     </div>
@@ -941,6 +1008,10 @@
     <div class="text-center space-y-1">
       <h2 id="hubCoffeeTitle" class="text-2xl font-black text-orange tracking-tight">Don Eli Tamatica</h2>
       <span id="hubCoffeeMetadataSub" class="text-[10px] font-bold text-slate-400 tracking-wide block uppercase">Carlos Montero • Honey • Square Mile</span>
+      <button type="button" onclick="routeToBrewAssistFor(currentHubCoffeeName)" class="mt-2 inline-flex items-center gap-1.5 bg-[#2A2A9A]/10 text-[#2A2A9A] text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full tap-target-fix">
+        <svg viewBox="0 0 24 24" class="w-3 h-3 fill-current"><path d="M12 2L14 9L21 12L14 15L12 22L10 15L3 12L10 9L12 2Z"/></svg>
+        Ask Brew Assist
+      </button>
     </div>
 
     <div class="grid grid-cols-3 gap-2.5">
@@ -1275,6 +1346,7 @@
       currentUser = null;
       currentUserEmail = null;
       globalDatabaseCachedStore = null;
+      resetWeeklyDigest();
       await supabaseClient.auth.signOut();
       switchAuthTab('login');
       switchActiveScreenViewState('viewLogin');
@@ -1370,6 +1442,7 @@
 
     function buildDashboardDataFromRows(brews, recipes, baseLibrary) {
       const methodFrequencyMap = {};
+      const coffeeFrequencyMap = {};
       const allUniqueCoffeesMap = {};
       const lastBrewedByCoffee = {};
       const lastUsedByGrinder = {};
@@ -1381,6 +1454,7 @@
         mostRecentCoffeeName = row.coffee_name || mostRecentCoffeeName;
 
         const coffeeName = row.coffee_name || "Unknown Coffee";
+        coffeeFrequencyMap[coffeeName] = (coffeeFrequencyMap[coffeeName] || 0) + 1;
 
         const method = row.brew_method || "Unknown Method";
         methodFrequencyMap[method] = (methodFrequencyMap[method] || 0) + 1;
@@ -1426,9 +1500,10 @@
         avgBrewTimeStr = formatSecondsToMS(avgSecs);
       }
 
-      const recentlyBrewedCoffees = Object.keys(lastBrewedByCoffee)
-        .sort((a, b) => lastBrewedByCoffee[b] - lastBrewedByCoffee[a])
-        .slice(0, 6);
+      const sortedCoffees = Object.keys(coffeeFrequencyMap).sort((a, b) => coffeeFrequencyMap[b] - coffeeFrequencyMap[a]);
+      const coffeesByLastBrewed = Object.keys(lastBrewedByCoffee)
+        .sort((a, b) => lastBrewedByCoffee[b] - lastBrewedByCoffee[a]);
+      const recentlyBrewedCoffees = coffeesByLastBrewed.slice(0, 6);
       // Monday-to-Sunday of the current week in local time; each entry counts
       // the brews logged on that day.
       const weekStart = new Date();
@@ -1467,8 +1542,13 @@
           }
         })),
         allUniqueCoffees: Object.values(allUniqueCoffeesMap),
+        coffeesByLastBrewed: coffeesByLastBrewed,
         knownGrinders: knownGrinders,
-        weeklyBrewCounts: weeklyBrewCounts
+        weeklyBrewCounts: weeklyBrewCounts,
+        popularCoffeesChartData: {
+          labels: sortedCoffees.slice(0, 6),
+          counts: sortedCoffees.slice(0, 6).map(c => coffeeFrequencyMap[c])
+        }
       };
     }
 
@@ -1484,6 +1564,7 @@
       document.getElementById('lblRecentSubLabel').innerText = data.mostRecentCoffeeName;
 
       renderDashboardListsAndCharts(data);
+      loadWeeklyDigest();
       document.getElementById('globalAppLoaderScreen').classList.add('hidden');
     }
 
@@ -1491,31 +1572,45 @@
     function renderDashboardListsAndCharts(data) {
       showAllSavedRecipes = false;
       renderSavedRecipesList();
+      showAllRecentCoffees = false;
+      renderRecentCoffeesList();
 
-      const recentBox = document.getElementById('boxRecentCoffeesList');
-      const recentCoffees = (data.recentlyBrewedCoffees || []).slice(0, 3);
-      recentBox.innerHTML = recentCoffees.length ? "" : "<p class='text-center text-xs text-slate-400 font-normal italic m-0'>Log brews to see them here.</p>";
-      recentCoffees.forEach(c => {
-        let btn = document.createElement('button');
-        btn.className = "w-full h-[34px] px-4 bg-white border border-slate-200/60 shadow-xs rounded-2xl text-[12px] font-bold text-black tracking-[-0.3px] truncate tap-target-fix transition-colors active:bg-[#EA6227] active:text-white";
-        btn.innerText = c;
-        btn.onclick = () => routeToCoffeeHubPage(c);
-        recentBox.appendChild(btn);
+      const popular = data.popularCoffeesChartData;
+      const popularBox = document.getElementById('boxPopularCoffeesChart');
+      const maxCount = Math.max(...popular.counts, 1);
+      popularBox.innerHTML = popular.labels.length ? "" : "<p class='col-span-6 pl-[17px] text-xs text-slate-400 font-normal italic m-0 pb-2'>Log brews to see your favourites.</p>";
+      popular.labels.forEach((name, i) => {
+        const count = popular.counts[i];
+        let col = document.createElement('div');
+        col.className = "min-w-0 flex flex-col items-center gap-[9px] cursor-pointer tap-target-fix";
+        col.onclick = () => routeToCoffeeHubPage(name);
+        // Bars run 40-112px so even the smallest leaves room for its count.
+        col.innerHTML = `
+          <div class="w-[21px] rounded-full bg-[#2A2A9A] flex justify-center pt-1.5" style="height:${Math.round(40 + 72 * count / maxCount)}px">
+            <span class="text-[10px] leading-4 font-bold text-[#EFEFEF]">${count}</span>
+          </div>
+          <span class="w-[34px] h-[22px] text-[9px] leading-[11px] font-bold text-black text-center uppercase tracking-[0.225px] line-clamp-2 break-words"></span>
+        `;
+        col.lastElementChild.innerText = name;
+        popularBox.appendChild(col);
       });
 
       const weekBox = document.getElementById('boxWeeklyBrewDays');
-      const todayIndex = (new Date().getDay() + 6) % 7;
       weekBox.innerHTML = "";
-      ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'].forEach((day, i) => {
+      ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach((day, i) => {
         const count = data.weeklyBrewCounts[i];
         let col = document.createElement('div');
-        col.className = "flex flex-col items-center gap-2";
+        col.className = "flex flex-col items-center gap-[3px]";
         col.title = `${count} brew${count === 1 ? '' : 's'}`;
+        // The tick is the design's two white strokes (assets/check-*.svg) laid end to end.
         col.innerHTML = `
-          <div class="relative w-8 h-[110px] rounded-full ${count ? 'bg-[#2A2A9A]' : 'bg-[#CAD5E2]'}">
-            ${i === todayIndex ? '<span class="absolute left-1/2 top-2.5 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white"></span>' : ''}
+          <span class="text-[11px] leading-[16.5px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">${day}</span>
+          <div class="relative w-[23px] h-[23px] rounded-full ${count ? 'bg-[#2A2A9A]' : 'bg-[#CAD5E2]'}">
+            ${count ? `
+              <img src="assets/check-short.svg" alt="" class="absolute left-[6px] top-[13px] origin-left rotate-[30deg]" width="5.65685" height="2">
+              <img src="assets/check-long.svg" alt="" class="absolute left-[11.17px] top-[15.8px] origin-left -rotate-[60deg]" width="11.3137" height="2">
+            ` : ''}
           </div>
-          <span class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">${day}</span>
         `;
         weekBox.appendChild(col);
       });
@@ -1552,12 +1647,12 @@
       const visible = showAllSavedRecipes ? recipes : recipes.slice(0, SAVED_RECIPES_PREVIEW_COUNT);
       visible.forEach(r => {
         let row = document.createElement('div');
-        row.className = "flex items-center gap-3 py-1.5 border-b border-slate-200 cursor-pointer tap-target-fix group";
+        row.className = "flex items-center gap-3 h-9 pl-[11px] pr-[9px] bg-white rounded-lg cursor-pointer tap-target-fix group";
         row.onclick = () => routeToRecipePage(r);
         row.innerHTML = `
-          <span class="flex-1 min-w-0 text-[14px] font-bold text-[#314158] truncate group-active:text-orange"></span>
-          <span class="flex-shrink-0 w-[22px] h-[21px] rounded-lg bg-slate-200/80 flex items-center justify-center text-[#1D293D]">
-            <svg viewBox="0 0 10 10" class="w-2 h-2 stroke-current fill-none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8L8 2M3.5 2H8v4.5"/></svg>
+          <span class="flex-1 min-w-0 text-[13px] font-bold text-black truncate group-active:text-orange"></span>
+          <span class="flex-shrink-0 w-[22px] h-[21px] rounded-lg bg-slate-200/80 flex items-center justify-center">
+            <img src="assets/arrow-open.svg" alt="" class="-rotate-45" width="9.5" height="7.36396">
           </span>
         `;
         row.firstElementChild.innerText = r;
@@ -1572,6 +1667,34 @@
     function toggleAllSavedRecipes() {
       showAllSavedRecipes = !showAllSavedRecipes;
       renderSavedRecipesList();
+    }
+
+    // Same pattern for recently brewed coffees: three by default, "view all
+    // coffees" expands in place to every recent coffee (up to six).
+    const RECENT_COFFEES_PREVIEW_COUNT = 3;
+    let showAllRecentCoffees = false;
+
+    function renderRecentCoffeesList() {
+      const coffees = globalDatabaseCachedStore.recentlyBrewedCoffees || [];
+      const recentBox = document.getElementById('boxRecentCoffeesList');
+      recentBox.innerHTML = coffees.length ? "" : "<p class='text-center text-xs text-slate-400 font-normal italic m-0'>Log brews to see them here.</p>";
+      const visible = showAllRecentCoffees ? coffees : coffees.slice(0, RECENT_COFFEES_PREVIEW_COUNT);
+      visible.forEach(c => {
+        let btn = document.createElement('button');
+        btn.className = "w-full h-[34px] px-4 bg-white border border-slate-200/60 shadow-xs rounded-2xl text-[12px] font-bold text-black tracking-[-0.3px] truncate tap-target-fix transition-colors active:bg-[#EA6227] active:text-white";
+        btn.innerText = c;
+        btn.onclick = () => routeToCoffeeHubPage(c);
+        recentBox.appendChild(btn);
+      });
+
+      const toggleBtn = document.getElementById('btnToggleAllCoffees');
+      toggleBtn.classList.toggle('hidden', coffees.length <= RECENT_COFFEES_PREVIEW_COUNT);
+      toggleBtn.innerText = showAllRecentCoffees ? "show fewer" : "view all coffees";
+    }
+
+    function toggleAllRecentCoffees() {
+      showAllRecentCoffees = !showAllRecentCoffees;
+      renderRecentCoffeesList();
     }
 
     // ─── CHART CANVAS RESET ──────────────────────────────────────────────────
@@ -2297,7 +2420,11 @@
         return;
       }
 
+      const savedScore = getNumericFieldValue(prefix + 'MyScore');
       returnToDashboard();
+      if (savedScore != null && savedScore <= LOW_SCORE_ASSIST_THRESHOLD) {
+        showLowScoreAssistPrompt(coffeeNameValue, savedScore);
+      }
     }
 
     // ─── COFFEE HUB ──────────────────────────────────────────────────────────
@@ -2377,7 +2504,10 @@
       };
     }
 
+    let currentHubCoffeeName = null;
+
     async function routeToCoffeeHubPage(coffeeName) {
+      currentHubCoffeeName = coffeeName;
       document.getElementById('globalAppLoaderScreen').classList.remove('hidden');
       switchActiveScreenViewState('viewCoffeeDetails');
       activeCompareVariable = 'grind';
@@ -2540,34 +2670,46 @@
     }
 
     // ─── BREW ASSIST ─────────────────────────────────────────────────────────
-    // A short, structured questionnaire (pick a coffee -> pick a category ->
-    // optional 140-char note) replaces the old open-ended chat entirely, to
-    // keep every session's AI cost fixed and predictable: one request in,
-    // one answer out, no unbounded follow-up thread.
-    const ASSIST_CATEGORIES = ['Origin', 'Roast Profile', 'Processing Method', 'Recipe', 'Brew Method', 'Grind Size', 'Dose', 'Yield', 'Brew Time', 'Temperature'];
+    // A short, structured questionnaire (pick a coffee -> say how it tasted ->
+    // optional 140-char note) keeps every session's AI cost fixed and
+    // predictable: one suggestion, plus at most one follow-up question about
+    // it. Each counts toward the daily limit enforced in api/brew-assist.py.
+    const ASSIST_TASTES = ['Sour', 'Bitter', 'Weak / watery', 'Too strong', 'Harsh / drying', 'Flat / dull', 'Just not great'];
+    const LOW_SCORE_ASSIST_THRESHOLD = 2;
     let assistSelectedCoffee = null;
-    let assistSelectedCategory = null;
+    let assistSelectedTastes = [];
+    let assistExtraNotesSent = '';
+    let assistSuggestion = null;
 
     function routeToBrewAssist() {
       switchActiveScreenViewState('viewBrewAssist');
       assistSelectedCoffee = null;
-      assistSelectedCategory = null;
+      assistSelectedTastes = [];
       assistShowStep('assistStepPicker');
+      refreshAssistRemaining();
 
-      const coffees = (globalDatabaseCachedStore && globalDatabaseCachedStore.allUniqueCoffees) || [];
+      // Most recently brewed first — that's almost always the one you want help with.
+      const coffees = (globalDatabaseCachedStore && globalDatabaseCachedStore.coffeesByLastBrewed) || [];
       const listBox = document.getElementById('assistCoffeeList');
       listBox.innerHTML = coffees.length
         ? ""
         : "<p class='text-slate-400 font-normal italic text-xs text-center py-6 m-0'>Log a brew first, then come back here to troubleshoot it.</p>";
 
-      coffees.forEach(coffee => {
+      coffees.forEach(name => {
         let btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chip-flat w-full h-[38px] text-xs font-bold text-slate-800';
-        btn.innerText = coffee.name;
-        btn.onclick = () => assistSelectCoffee(coffee.name);
+        btn.innerText = name;
+        btn.onclick = () => assistSelectCoffee(name);
         listBox.appendChild(btn);
       });
+    }
+
+    // Entry point from the coffee page and the low-score prompt: jump
+    // straight to "how did it taste?" for that coffee.
+    function routeToBrewAssistFor(coffeeName) {
+      routeToBrewAssist();
+      if (coffeeName) assistSelectCoffee(coffeeName);
     }
 
     function assistShowStep(stepId) {
@@ -2578,7 +2720,7 @@
 
     async function assistSelectCoffee(coffeeName) {
       assistSelectedCoffee = coffeeName;
-      assistSelectedCategory = null;
+      assistSelectedTastes = [];
 
       // The most recent note is only quoted for the heading's phrasing — the
       // full brew history itself is fetched server-side from the coffee's
@@ -2588,72 +2730,227 @@
       const heading = document.getElementById('assistCategoryHeading');
       if (latestNote) {
         const truncated = latestNote.length > 100 ? latestNote.slice(0, 100) + '…' : latestNote;
-        heading.innerText = `In your notes you said, "${truncated}" — what would you like help with?`;
+        heading.innerText = `In your notes you said, "${truncated}"`;
       } else {
-        heading.innerText = "What would you like help with?";
+        heading.innerText = coffeeName;
       }
 
       const list = document.getElementById('assistCategoryList');
       list.innerHTML = '';
-      ASSIST_CATEGORIES.forEach(category => {
+      ASSIST_TASTES.forEach(taste => {
         let btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chip-flat w-full h-[38px] text-xs font-bold text-slate-800';
-        btn.innerText = category;
-        btn.onclick = () => assistSelectCategory(category, btn);
+        btn.innerText = taste;
+        btn.onclick = () => assistToggleTaste(taste, btn);
         list.appendChild(btn);
       });
+      document.getElementById('btnAssistTastesNext').disabled = true;
 
       assistShowStep('assistStepCategory');
     }
 
-    function assistSelectCategory(category, btnEl) {
-      assistSelectedCategory = category;
-      document.querySelectorAll('#assistCategoryList .chip-flat').forEach(chip => chip.classList.remove('selected'));
-      btnEl.classList.add('selected');
+    function assistToggleTaste(taste, btnEl) {
+      const i = assistSelectedTastes.indexOf(taste);
+      if (i === -1) assistSelectedTastes.push(taste);
+      else assistSelectedTastes.splice(i, 1);
+      btnEl.classList.toggle('selected', i === -1);
+      document.getElementById('btnAssistTastesNext').disabled = assistSelectedTastes.length === 0;
+    }
+
+    function assistConfirmTastes() {
+      if (!assistSelectedTastes.length) return;
       document.getElementById('assistExtraNotes').value = '';
       document.getElementById('assistExtraNotesCounter').innerText = '0/140';
       assistShowStep('assistStepExtra');
     }
 
+    function setAssistRemaining(remaining, limit) {
+      const text = remaining == null ? '' : `${remaining} of ${limit || 5} Brew Assist requests left today`;
+      document.querySelectorAll('.assist-remaining-label').forEach(el => el.innerText = text);
+    }
+
+    async function refreshAssistRemaining() {
+      setAssistRemaining(null);
+      try {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const token = sessionData.session ? sessionData.session.access_token : null;
+        if (!token) return;
+        const response = await fetch('/api/brew-assist', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!response.ok) return;
+        const json = await response.json();
+        setAssistRemaining(json.remaining, json.limit);
+      } catch (err) {
+        // The count is a convenience — never block Brew Assist over it.
+      }
+    }
+
     async function handleAssistSubmit(e) {
       e.preventDefault();
-      if (!assistSelectedCoffee || !assistSelectedCategory) return;
+      if (!assistSelectedCoffee || !assistSelectedTastes.length) return;
 
-      const extraNotes = document.getElementById('assistExtraNotes').value.trim();
+      assistExtraNotesSent = document.getElementById('assistExtraNotes').value.trim();
+      assistSuggestion = null;
       const btn = document.getElementById('btnAssistSubmitSpinner');
-      // Play the loading animation on the button itself, in place, while the
-      // request is in flight — same orange/purple pulse as the full-screen
-      // "Syncing Bloomly System" splash, just replayed on the button.
+      // Play the loading animation on the button itself, in place, until the
+      // first words of the reply arrive — then switch to the result screen
+      // and let the answer write itself in.
       btn.disabled = true;
       btn.classList.add('btn-loading');
       document.getElementById('btnAssistSpinnerIcon').classList.remove('hidden');
       document.getElementById('btnAssistSubmitLabel').innerText = "Thinking...";
 
-      const result = await callBrewAssistAPI({
+      resetAssistResult();
+      let shownResult = false;
+      const showResult = () => {
+        if (shownResult) return;
+        shownResult = true;
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        document.getElementById('btnAssistSpinnerIcon').classList.add('hidden');
+        document.getElementById('btnAssistSubmitLabel').innerText = "Get Suggestion";
+        assistShowStep('assistStepResult');
+      };
+
+      let replyText = '';
+      const result = await streamBrewAssist({
         coffeeName: assistSelectedCoffee,
-        category: assistSelectedCategory,
-        extraNotes
+        tastes: assistSelectedTastes,
+        extraNotes: assistExtraNotesSent
+      }, text => {
+        replyText += text;
+        showResult();
+        document.getElementById('assistResultCard').classList.remove('hidden');
+        renderAssistSuggestion(readPartialSuggestion(replyText));
       });
+      showResult();
 
-      btn.disabled = false;
-      btn.classList.remove('btn-loading');
-      document.getElementById('btnAssistSpinnerIcon').classList.add('hidden');
-      document.getElementById('btnAssistSubmitLabel').innerText = "Get Suggestion";
+      if (result.error) {
+        document.getElementById('assistResultCard').classList.add('hidden');
+        showAssistError(result.error);
+        return;
+      }
+      try {
+        assistSuggestion = JSON.parse(replyText);
+      } catch (err) {
+        document.getElementById('assistResultCard').classList.add('hidden');
+        showAssistError('Brew Assist sent back something unreadable. Please try again.');
+        return;
+      }
+      renderAssistSuggestion(assistSuggestion);
+      const nextBrew = assistSuggestion.next_brew || {};
+      document.getElementById('btnAssistUseSuggestion').classList.toggle('hidden', !Object.values(nextBrew).some(v => v != null));
+      document.getElementById('assistFollowUpForm').classList.remove('hidden');
+    }
 
-      assistShowStep('assistStepResult');
-      const resultCard = document.getElementById('assistResultCard');
-      resultCard.classList.remove('hidden');
-      document.getElementById('assistResultText').innerText = result.error
-        ? `Sorry — ${result.error}`
-        : result.reply;
+    function resetAssistResult() {
+      document.getElementById('assistResultError').classList.add('hidden');
+      document.getElementById('assistResultCard').classList.add('hidden');
+      ['assistChangeCard', 'assistWhyCard', 'assistIfNotBlock', 'btnAssistUseSuggestion', 'assistFollowUpForm', 'assistFollowUpAnswer']
+        .forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['assistDiagnosis', 'assistChangeSetting', 'assistChangeFrom', 'assistChangeTo', 'assistWhy', 'assistIfNot', 'assistFollowUpText']
+        .forEach(id => document.getElementById(id).innerText = '');
+      document.getElementById('assistFollowUpInput').value = '';
+    }
+
+    function showAssistError(message) {
+      document.getElementById('assistResultErrorText').innerText = `Sorry — ${message}`;
+      document.getElementById('assistResultError').classList.remove('hidden');
+    }
+
+    // The suggestion arrives as JSON a few characters at a time. Rather than
+    // wait for the whole object, pull out each text field as far as it has
+    // been written so far, so the diagnosis appears while the rest is coming.
+    function readPartialSuggestion(raw) {
+      const field = name => {
+        const m = raw.match(new RegExp(`"${name}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)`));
+        if (!m) return '';
+        const safe = m[1].replace(/\\(u[0-9a-fA-F]{0,3})?$/, '');
+        try { return JSON.parse(`"${safe}"`); } catch (err) { return ''; }
+      };
+      return {
+        diagnosis: field('diagnosis'),
+        change: { setting: field('setting'), from: field('from'), to: field('to') },
+        why: field('why'),
+        if_not: field('if_not')
+      };
+    }
+
+    function renderAssistSuggestion(s) {
+      const change = s.change || {};
+      document.getElementById('assistDiagnosis').innerText = s.diagnosis || '';
+      document.getElementById('assistChangeSetting').innerText = change.setting || '';
+      document.getElementById('assistChangeFrom').innerText = change.from || '';
+      document.getElementById('assistChangeTo').innerText = change.to || '';
+      document.getElementById('assistChangeCard').classList.toggle('hidden', !change.setting);
+      document.getElementById('assistWhy').innerText = s.why || '';
+      document.getElementById('assistWhyCard').classList.toggle('hidden', !s.why);
+      document.getElementById('assistIfNot').innerText = s.if_not || '';
+      document.getElementById('assistIfNotBlock').classList.toggle('hidden', !s.if_not);
+    }
+
+    async function handleAssistFollowUp(e) {
+      e.preventDefault();
+      const question = document.getElementById('assistFollowUpInput').value.trim();
+      if (!question || !assistSuggestion) return;
+
+      // One follow-up per suggestion: hide the box as soon as it's asked.
+      document.getElementById('assistFollowUpForm').classList.add('hidden');
+      document.getElementById('assistFollowUpQuestion').innerText = question;
+      const answerEl = document.getElementById('assistFollowUpText');
+      answerEl.innerText = 'Thinking...';
+      document.getElementById('assistFollowUpAnswer').classList.remove('hidden');
+
+      let answer = '';
+      const result = await streamBrewAssist({
+        coffeeName: assistSelectedCoffee,
+        tastes: assistSelectedTastes,
+        extraNotes: assistExtraNotesSent,
+        followUp: { question, suggestion: assistSuggestion }
+      }, text => {
+        answer += text;
+        answerEl.innerText = answer;
+      });
+      if (result.error) answerEl.innerText = `Sorry — ${result.error}`;
+    }
+
+    // Opens Log Recent for this coffee with Brew Assist's suggested settings
+    // already dialled in, so trying the fix is one tap away.
+    function assistUseSuggestion() {
+      if (!assistSuggestion) return;
+      const coffees = (globalDatabaseCachedStore && globalDatabaseCachedStore.allUniqueCoffees) || [];
+      const record = coffees.find(c => c.name === assistSelectedCoffee) || { name: assistSelectedCoffee };
+      routeToLogRecent(record);
+
+      const nb = assistSuggestion.next_brew || {};
+      const snap = (v, min, max, step) => Math.min(max, Math.max(min, Math.round(v / step) * step));
+      const setWheel = (wheelId, hiddenId, min, max, step, decimals, suffix, value) => {
+        if (value == null) return;
+        buildWheelPicker(wheelId, hiddenId, min, max, step, decimals, suffix, snap(value, min, max, step));
+        document.getElementById(hiddenId).dataset.touched = 'true';
+      };
+      const setSlider = (id, bubbleId, value, formatFn) => {
+        if (value == null) return;
+        const el = document.getElementById(id);
+        el.value = snap(value, parseFloat(el.min), parseFloat(el.max), parseFloat(el.step));
+        el.dataset.touched = 'true';
+        refreshSliderVisual(id, bubbleId, formatFn);
+      };
+      setWheel('lrDoseWheel', 'lrDose', 5, 30, 0.5, 1, 'g', nb.dose_g);
+      setWheel('lrYieldWheel', 'lrYield', 50, 500, 5, 0, 'g', nb.yield_g);
+      setWheel('lrGrindWheel', 'lrGrind', 1, 50, 1, 0, ' clicks', nb.grind_clicks);
+      setSlider('lrBrewTime', 'lrBrewTimeBubble', nb.brew_time_seconds, formatSecondsToMS);
+      setSlider('lrWaterTemp', 'lrWaterTempBubble', nb.water_temp_c);
     }
 
     function assistStartOver() {
       routeToBrewAssist();
     }
 
-    async function callBrewAssistAPI(payload) {
+    // Streams a Brew Assist reply: calls onText with each piece of text as it
+    // arrives (see the event format at the top of api/brew-assist.py), and
+    // resolves to {} when finished or {error} if it failed.
+    async function streamBrewAssist(payload, onText) {
       try {
         const { data: sessionData } = await supabaseClient.auth.getSession();
         const token = sessionData.session ? sessionData.session.access_token : null;
@@ -2668,13 +2965,105 @@
           body: JSON.stringify(payload)
         });
 
-        const json = await response.json();
-        if (!response.ok) return { error: json.error || 'Something went wrong.' };
-        return { reply: json.reply };
+        if (!response.ok) {
+          const json = await response.json().catch(() => ({}));
+          if (response.status === 429) setAssistRemaining(0);
+          return { error: json.error || 'Something went wrong.' };
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffered = '';
+        let finished = false;
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffered += decoder.decode(value, { stream: true });
+          const lines = buffered.split('\n');
+          buffered = lines.pop();
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const event = JSON.parse(line);
+            if (event.type === 'meta') setAssistRemaining(event.remaining);
+            else if (event.type === 'delta') onText(event.text);
+            else if (event.type === 'error') return { error: event.error };
+            else if (event.type === 'done') finished = true;
+          }
+        }
+        return finished ? {} : { error: 'The connection dropped before Brew Assist finished. Please try again.' };
       } catch (err) {
         console.error('Brew Assist request failed:', err);
         return { error: 'Could not reach Brew Assist. Check your connection and try again.' };
       }
+    }
+
+    // ─── LOW-SCORE PROMPT ────────────────────────────────────────────────────
+    let lowScoreAssistCoffee = null;
+
+    function showLowScoreAssistPrompt(coffeeName, score) {
+      lowScoreAssistCoffee = coffeeName;
+      document.getElementById('lowScoreAssistText').innerText =
+        `That ${coffeeName} scored ${+score.toFixed(1)}/5. Want Brew Assist's help with the next one?`;
+      document.getElementById('lowScoreAssistPrompt').classList.remove('hidden');
+    }
+
+    function dismissLowScoreAssistPrompt() {
+      document.getElementById('lowScoreAssistPrompt').classList.add('hidden');
+    }
+
+    function acceptLowScoreAssistPrompt() {
+      dismissLowScoreAssistPrompt();
+      routeToBrewAssistFor(lowScoreAssistCoffee);
+    }
+
+    // ─── WEEKLY DIGEST ───────────────────────────────────────────────────────
+    // Last week's report is written in the background through the Batch API
+    // (see api/weekly-digest.py). The first dashboard load of a new week kicks
+    // it off; later loads pick it up once it's ready. Checks are spaced out so
+    // a busy session doesn't poll the batch on every return to the dashboard.
+    const WEEKLY_DIGEST_RECHECK_MS = 5 * 60 * 1000;
+    let weeklyDigestLastCheck = 0;
+    let weeklyDigestReady = null;
+
+    async function loadWeeklyDigest() {
+      if (weeklyDigestReady) return renderWeeklyDigest(weeklyDigestReady);
+      if (Date.now() - weeklyDigestLastCheck < WEEKLY_DIGEST_RECHECK_MS) return;
+      weeklyDigestLastCheck = Date.now();
+      try {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const token = sessionData.session ? sessionData.session.access_token : null;
+        if (!token) return;
+        const response = await fetch(`/api/weekly-digest?tz=${new Date().getTimezoneOffset()}`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!response.ok) return;
+        const json = await response.json();
+        if (json.status === 'ready' && json.digest) {
+          weeklyDigestReady = json.digest;
+          renderWeeklyDigest(json.digest);
+        }
+      } catch (err) {
+        // The digest is a bonus — never let it disturb the dashboard.
+      }
+    }
+
+    function resetWeeklyDigest() {
+      weeklyDigestReady = null;
+      weeklyDigestLastCheck = 0;
+      document.getElementById('weeklyDigestCard').classList.add('hidden');
+    }
+
+    function renderWeeklyDigest(digest) {
+      document.getElementById('weeklyDigestHeadline').innerText = digest.headline || '';
+      const list = document.getElementById('weeklyDigestHighlights');
+      list.innerHTML = '';
+      (digest.highlights || []).forEach(h => {
+        const li = document.createElement('li');
+        li.innerText = h;
+        list.appendChild(li);
+      });
+      document.getElementById('weeklyDigestTry').innerText = digest.try_this_week || '';
+      document.getElementById('weeklyDigestCard').classList.remove('hidden');
     }
 
     // ─── PROFILE ─────────────────────────────────────────────────────────────
@@ -2999,6 +3388,7 @@
         currentUser = null;
         currentUserEmail = null;
         globalDatabaseCachedStore = null;
+        resetWeeklyDigest();
         switchAuthTab('login');
         switchActiveScreenViewState('viewLogin');
       }
