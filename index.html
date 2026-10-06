@@ -287,7 +287,7 @@
     </div>
 
     <!-- Weekly digest — last week's report, shown once it's been written -->
-    <div id="weeklyDigestCard" class="hidden bg-white rounded-lg mx-[18px] p-4 space-y-2">
+    <div id="weeklyDigestCard" class="hidden bg-white rounded-lg p-4 space-y-2">
       <h3 class="text-[11px] leading-[16.5px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">Your week in coffee</h3>
       <p id="weeklyDigestHeadline" class="text-sm font-black text-slate-800 leading-snug m-0"></p>
       <ul id="weeklyDigestHighlights" class="space-y-1 text-xs font-medium text-slate-600 list-disc pl-4 m-0"></ul>
@@ -297,7 +297,7 @@
     <!-- Recently Brewed Coffees — full-width pill rows; orange is the pressed state -->
     <div class="pt-2 space-y-4">
       <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">Recently brewed coffees</h3>
-      <div id="boxRecentCoffeesList" class="space-y-2 px-2.5"></div>
+      <div id="boxRecentCoffeesList" class="space-y-2"></div>
       <div class="flex justify-center">
         <button id="btnToggleAllCoffees" onclick="toggleAllRecentCoffees()" class="hidden btn-accent w-[90px] h-[17px] text-[8px] leading-4 font-bold tracking-[0.3px] rounded-xl tap-target-fix">view all coffees</button>
       </div>
@@ -306,7 +306,7 @@
     <!-- Most Popular Coffees — top six by brew count (Figma "Most popular coffees
          chart", node 56:107): pill bars with the count inside, names underneath. -->
     <div class="pt-4">
-      <div class="bg-white rounded-lg mx-[18px] pt-[13.25px] pb-[15px] pl-[17px]">
+      <div class="bg-white rounded-lg pt-[13.25px] pb-[15px] pl-[17px]">
         <h3 class="text-[11px] leading-[16.5px] font-bold text-[#90A1B9] uppercase tracking-[1.1px]">Most popular coffees</h3>
         <div id="boxPopularCoffeesChart" class="grid grid-cols-6 items-end -ml-[17px] px-[30px] mt-[17px]"></div>
       </div>
@@ -315,7 +315,7 @@
     <!-- My Saved Recipes — white cards with an open-arrow chip per row -->
     <div class="pt-4 space-y-4">
       <h3 class="text-[11px] font-bold text-[#90A1B9] uppercase tracking-[1.1px] text-center">My saved recipes</h3>
-      <div id="boxSavedRecipesList" class="space-y-1.5 px-3.5"></div>
+      <div id="boxSavedRecipesList" class="space-y-1.5"></div>
       <div class="flex items-center justify-center gap-3 pt-1">
         <button id="btnToggleAllRecipes" onclick="toggleAllSavedRecipes()" class="hidden btn-accent text-[9px] font-bold tracking-[0.3px] px-3 py-0.5 rounded-xl tap-target-fix">view all recipes</button>
         <button onclick="triggerNewRecipeCreation()" class="text-[9px] font-bold text-orange tracking-[0.3px] underline tap-target-fix">add a new recipe</button>
