@@ -55,6 +55,8 @@
     .tap-target-fix { -webkit-tap-highlight-color: transparent; }
     /* Login / register screens */
     #viewLogin { min-height: 100vh; }
+    .auth-switch-btn { color: #2A2A9A; transition: all 0.2s ease; }
+    .auth-switch-btn.active { background-color: #EA6227; color: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     /* Action buttons uniform style */
     .action-btn-primary { background-color: #EA6227; color: #FFFFFF; border-radius: 16px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s ease; }
     .action-btn-primary:active { transform: scale(0.97); }
@@ -128,6 +130,12 @@
     </div>
 
     <div class="relative z-10 w-full max-w-sm px-8 mt-8 flex flex-col items-center">
+      <!-- Log in / Sign up switcher (hidden on the forgot / set-new-password screens) -->
+      <div id="authSwitcher" role="tablist" class="w-full grid grid-cols-2 p-1 mb-5 bg-[#EEF6F1] rounded-full shadow-sm">
+        <button type="button" role="tab" id="authSwitchLogin" onclick="switchAuthTab('login')" class="auth-switch-btn active py-2 rounded-full text-xs font-bold tracking-wide tap-target-fix">Log in</button>
+        <button type="button" role="tab" id="authSwitchRegister" onclick="switchAuthTab('register')" class="auth-switch-btn py-2 rounded-full text-xs font-bold tracking-wide tap-target-fix">Sign up</button>
+      </div>
+
       <p id="loginErrorMsg" class="hidden w-full text-center text-sm text-red-500 font-bold bg-red-50 border border-red-100/80 rounded-2xl px-4 py-3.5 mb-4"></p>
       <p id="registerErrorMsg" class="hidden w-full text-center text-sm text-red-500 font-bold bg-red-50 border border-red-100/80 rounded-2xl px-4 py-3.5 mb-4"></p>
 
@@ -183,11 +191,8 @@
         <button type="submit" id="btnRegisterSpinner" class="w-full btn-accent font-bold text-xs py-2.5 rounded-full mt-2 shadow-sm cursor-pointer tracking-wide">Create account</button>
       </form>
 
-      <p id="authToggleRow" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
-        <span id="forgotPasswordInline" class="block mb-1">
-          <button type="button" onclick="switchAuthTab('forgot')" class="underline tap-target-fix">Forgot password?</button>
-        </span>
-        or <button type="button" id="authToggleLink" onclick="switchAuthTab('register')" class="underline tap-target-fix">Sign up</button>
+      <p id="forgotPasswordInline" class="text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
+        <button type="button" onclick="switchAuthTab('forgot')" class="underline tap-target-fix">Forgot password?</button>
       </p>
       <p id="authBackToLoginRow" class="hidden text-center text-[9px] font-bold text-white/80 uppercase tracking-wider mt-4">
         <button type="button" onclick="switchAuthTab('login')" class="underline tap-target-fix">Back to log in</button>
@@ -1175,6 +1180,8 @@
       const btn = document.getElementById('btnLoginSpinner');
       const errBox = document.getElementById('loginErrorMsg');
       errBox.classList.add('hidden');
+      errBox.classList.remove('text-green-600', 'bg-green-50', 'border-green-100/80');
+      errBox.classList.add('text-red-500', 'bg-red-50', 'border-red-100/80');
 
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -1219,7 +1226,7 @@
       });
 
       btn.disabled = false;
-      btn.innerText = "Sign up";
+      btn.innerText = "Create account";
 
       if (error) {
         errBox.innerText = error.message;
@@ -1233,12 +1240,15 @@
         // Email confirmation is off — the account is immediately active.
         await loadUserProfileAndEnter(data.session);
       } else {
-        // Email confirmation is required — there's no session yet.
-        errBox.classList.remove('text-red-500', 'bg-red-50', 'border-red-100/80');
-        errBox.classList.add('text-green-600', 'bg-green-50', 'border-green-100/80');
-        errBox.innerText = "Check your email to confirm your account, then log in.";
-        errBox.classList.remove('hidden');
+        // Email confirmation is required — there's no session yet. Switch tabs
+        // first: switchAuthTab hides every message box, so showing this before
+        // the switch would hide it immediately.
         switchAuthTab('login');
+        const loginMsgBox = document.getElementById('loginErrorMsg');
+        loginMsgBox.classList.remove('text-red-500', 'bg-red-50', 'border-red-100/80');
+        loginMsgBox.classList.add('text-green-600', 'bg-green-50', 'border-green-100/80');
+        loginMsgBox.innerText = "Check your email to confirm your account, then log in.";
+        loginMsgBox.classList.remove('hidden');
       }
     }
 
@@ -1250,14 +1260,15 @@
       document.getElementById('formForgotPassword').classList.toggle('hidden', tab !== 'forgot');
       document.getElementById('formSetNewPassword').classList.add('hidden');
       document.getElementById('forgotPasswordInline').classList.toggle('hidden', tab !== 'login');
-      document.getElementById('authToggleRow').classList.toggle('hidden', tab === 'forgot');
+      document.getElementById('authSwitcher').classList.toggle('hidden', tab === 'forgot');
       document.getElementById('authBackToLoginRow').classList.toggle('hidden', tab !== 'forgot');
 
-      if (tab !== 'forgot') {
-        const toggleLink = document.getElementById('authToggleLink');
-        toggleLink.innerText = tab === 'login' ? 'Sign up' : 'Sign in';
-        toggleLink.setAttribute('onclick', tab === 'login' ? "switchAuthTab('register')" : "switchAuthTab('login')");
-      }
+      const loginTab = document.getElementById('authSwitchLogin');
+      const registerTab = document.getElementById('authSwitchRegister');
+      loginTab.classList.toggle('active', tab === 'login');
+      registerTab.classList.toggle('active', tab === 'register');
+      loginTab.setAttribute('aria-selected', tab === 'login');
+      registerTab.setAttribute('aria-selected', tab === 'register');
 
       document.getElementById('loginErrorMsg').classList.add('hidden');
       document.getElementById('registerErrorMsg').classList.add('hidden');
@@ -1275,7 +1286,8 @@
       document.getElementById('formRegister').classList.add('hidden');
       document.getElementById('formForgotPassword').classList.add('hidden');
       document.getElementById('formSetNewPassword').classList.remove('hidden');
-      document.getElementById('authToggleRow').classList.add('hidden');
+      document.getElementById('authSwitcher').classList.add('hidden');
+      document.getElementById('forgotPasswordInline').classList.add('hidden');
       document.getElementById('authBackToLoginRow').classList.add('hidden');
     }
 
